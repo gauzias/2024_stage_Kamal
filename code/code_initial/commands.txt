@@ -1,0 +1,20 @@
+fslswapdim  srr_template_masked.nii.gz  -x y -z srr_template_masked_ro.nii.gz
+fslcpgeom srr_template_masked.nii.gz srr_template_masked_ro.nii.gz 
+
+antsRegistrationSyN.sh -d 3 -f srr_template_masked_ro.nii.gz -m sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz  -o sub_2_temp_ro_r -t r
+
+
+antsApplyTransforms -d 3 -i STA31_all_reg_LR_dilM.nii.gz -r srr_template_masked.nii.gz -o STA31_all_reg_LR_dilM_rl.nii.gz -n NearestNeighbor
+
+fslswapdim  STA31_all_reg_LR_dilM_rl.nii.gz  -x y -z STA31_all_reg_LR_dilM_rl_ro.nii.gz
+fslcpgeom  srr_template_masked_ro.nii.gz STA31_all_reg_LR_dilM_rl_ro.nii.gz 
+
+antsApplyTransforms -d 3 -i STA31_all_reg_LR_dilM_rl_ro.nii.gz  -o sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_LR_hemi.nii.gz -r sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz -t [sub_2_temp_ro_r0GenericAffine.mat,1] -n NearestNeighbor
+
+
+fsleyes sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_LR_hemi.nii.gz
+
+
+fslmaths  sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_LR_hemi.nii.gz -thr 2 -mul 5  sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_L_only_x10.nii.gz -odt short
+
+fslmaths sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_L_only_x10.nii.gz -add sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_segmentation.nii.gz sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_segmentation_LR.nii.gz
