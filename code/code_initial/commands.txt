@@ -1,5 +1,7 @@
 fslswapdim  srr_template_masked.nii.gz  -x y -z srr_template_masked_ro.nii.gz
+#Apres un test on peut observe que cette commande fslswapdim change la direction de l'image, dans ce cas ici, elle tourne l'image à 180 sur axe x et axe z 
 fslcpgeom srr_template_masked.nii.gz srr_template_masked_ro.nii.gz 
+#Apres teste, on peut noter qu'il n'y a pas eu de changement mais que les propriètés de l'images sont copiés d'une image à une autre,notamment la taille des voxels
 
 antsRegistrationSyN.sh -d 3 -f srr_template_masked_ro.nii.gz -m sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz  -o sub_2_temp_ro_r -t r
 
