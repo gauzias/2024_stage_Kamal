@@ -4,7 +4,7 @@ fslcpgeom srr_template_masked.nii.gz srr_template_masked_ro.nii.gz
 #Apres teste, on peut noter qu'il n'y a pas eu de changement mais que les propriètés de l'images sont copiés d'une image à une autre,notamment la taille des voxels
 
 antsRegistrationSyN.sh -d 3 -f srr_template_masked_ro.nii.gz -m sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz  -o sub_2_temp_ro_r -t r
-
+#Apres test de cette operation de recalage avec ants, on note que d fait reference à la dimension, f est suivis par l'image fixe et m est suivi de l'image qu'o, cherche à recaler sur la premiere, Un recalage Syn est un recalage par normalisation symetric, elle n'a pas de limite fixe sur les degrés de liberté, elle est non linéaire, il y a une grande fléxibilité et une régularisations des déformations (donc haute précision), pour finir en o nous obtenons la déformation qui a été necessaire pour réaliser le recalage 
 
 antsApplyTransforms -d 3 -i STA31_all_reg_LR_dilM.nii.gz -r srr_template_masked.nii.gz -o STA31_all_reg_LR_dilM_rl.nii.gz -n NearestNeighbor
 
