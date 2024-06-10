@@ -24,5 +24,6 @@ fsleyes sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz sub-1018_
 
 
 fslmaths  sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_LR_hemi.nii.gz -thr 2 -mul 5  sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_L_only_x10.nii.gz -odt short
-
+#On realise un seuillage thr = 2 et une multiplication mul = 5 sur l'un des deux hemispheres grace à une image_segmenté de l'hemisphere gauche L 
 fslmaths sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_L_only_x10.nii.gz -add sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_segmentation.nii.gz sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_segmentation_LR.nii.gz
+#On additionne l'image avec hemisphere gauche réhausser, l'image correctement recaler (preservant la lateralité), on obtient en sortie une image ou se distingue les deux hemispheres, c'est donc une segmentation de notre sujet STA_31 qui preserve la lateralité
