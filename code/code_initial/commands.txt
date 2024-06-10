@@ -16,8 +16,9 @@ antsApplyTransforms -d 3 -i STA31_all_reg_LR_dilM.nii.gz -r srr_template_masked.
 fslswapdim  STA31_all_reg_LR_dilM_rl.nii.gz  -x y -z STA31_all_reg_LR_dilM_rl_ro.nii.gz
 fslcpgeom  srr_template_masked_ro.nii.gz STA31_all_reg_LR_dilM_rl_ro.nii.gz 
 
+#On reapplique les deux opérations ci dessus pour retourner l'image (image dont on connait lateralité)
 antsApplyTransforms -d 3 -i STA31_all_reg_LR_dilM_rl_ro.nii.gz  -o sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_LR_hemi.nii.gz -r sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz -t [sub_2_temp_ro_r0GenericAffine.mat,1] -n NearestNeighbor
-
+#Nous avons ici l'operations qui permet de récaler l'image dont on cherche la latéralité ("sub-1018.....desc_aligned"dans -r ), on le recalant surl 'image dont on connait la lateralité ("STA31.....")
 
 fsleyes sub-1018_ses-1181_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz sub-1018_ses-1181_acq-haste_rec-nesvor_T2w_STA31_seg_LR_hemi.nii.gz
 
