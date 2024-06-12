@@ -4,9 +4,13 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt 
 import nibabel as nib
 import nisnap
+import ants
+import os
+import glob
 #Conversion d'image nifti en numpy array en 3d
-input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w = nib.load(r"/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz")
+input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w = nib.load('/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz')
 sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w = input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.get_fdata()
+print(type(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[1,1,1]))
 
 # On swap l'image
 sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot = np.transpose(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w, (0,1,2))[::-1, :, ::-1]
@@ -26,19 +30,18 @@ tranche_x = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[74,:,:]
 tranche_x_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[74,:,:]
 
 #Affichage
-# plt.figure(1)
-# plt.subplot(1,2,1)
-# plt.imshow(tranche_z)
-# plt.title("tranche z image origin")
-# plt.subplot(1,2,2)
-# plt.imshow(tranche_z_rot)
-# plt.title("tranche z rot image origin")
-# plt.show()
+plt.figure(1)
+plt.subplot(1,2,1)
+plt.imshow(tranche_z, cmap='gray')
+plt.title("tranche z image origin")
+plt.subplot(1,2,2)
+plt.imshow(tranche_z_rot, cmap='bone')
+plt.title("tranche z rot image origin")
+plt.show()
 #
 # plt.figure(2)
 # plt.subplot(1,2,1)
 # plt.imshow(tranche_y)
-# plt.title("tranche y image origin")
 # plt.subplot(1,2,2)
 # plt.imshow(tranche_y_rot)
 # plt.title("tranche y rot image origin")
@@ -56,19 +59,28 @@ tranche_x_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[74,:
 
 #Copie des informaations géométrique / Fslcpgeom
 #Conversion de np array vers fichier nifti
-Sub_0001_template_masked_rot_conv = np.array(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot, dtype = np.float32)
-affine = np.eye(4)
-Sub_0001_template_masked_rot_nifti = nib.Nifti1Image(Sub_0001_template_masked_rot_conv, affine)
+Sub_0001_template_masked_rot_nifti = np.array(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot, dtype = np.float64)
 
 
-# Copier l'affine matrix et le header du fichier source vers le fichier cible
+#Copier l'affine matrix et le header du fichier source vers le fichier cible
+# affine = np.eye(4)
 affine_source = input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.affine
-Sub_0001_template_masked_rot_nifti.set_sform(affine_source)
-Sub_0001_template_masked_rot_nifti.set_qform(affine_source)
-for key, value in input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.header.items():
-    Sub_0001_template_masked_rot_nifti.header[key] = value
+header_source = input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.header
+Sub_0001_template_masked_rot_nifti = nib.Nifti1Image(Sub_0001_template_masked_rot_nifti,affine=affine_source, header = header_source )
+print(input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.header)
+print(Sub_0001_template_masked_rot_nifti.header)
 
 
 # Enregistrer l'image NIfTI
 path_pour_fichier_rot = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot.nii.gz"
 nib.save(Sub_0001_template_masked_rot_nifti, path_pour_fichier_rot)
+
+#ON cacule grace à ants registration le WARP SYN nécessaire pour recaler une image A à image B
+ants.registration(fixed=fi, moving=mi, type_of_transform = 'SyN' )
+
+
+#Parcours d'un dossier pour trouver le bon atlas du bon(du bon âge), il faut un critère qu'on cherche à minimiser
+path_des_atlas = '/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/'
+pattern_atlas = path_des_atlas + '/STA[21-38]*_all_reg_LR_dilM.nii.gz'
+
+for chemin_fichier in glob.glob(pattern_atlas):
