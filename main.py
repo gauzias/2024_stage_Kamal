@@ -116,13 +116,13 @@ if __name__ == "__main__":
         Atlas_Warped = ants.apply_transforms(img_fix,atlas_mouv_reshap , transformlist=Warp_atlas['fwdtransforms'][0])
         return Atlas_Warped
 
-
+    sim_lui_meme = ants.image_similarity(img_sub_aligned_ants,img_sub_aligned_ants,  metric_type= 'Correlation')
+    print(sim_lui_meme)
     criteres = ['MeanSquares', 'MattesMutualInformation', 'Correlation']
     simlarity= 0
 
     tableau_criteres_by_atlas = pd.DataFrame(index=files_atlas, columns=criteres)
     for atlas in files_atlas:
-        print(os.path.abspath(atlas))
         Atlas_rchrche = ants.image_read(os.path.join(path_des_atlas,atlas))
         Atlas_Warped = Recalage_atlas_rigid(img_sub_aligned_ants, Atlas_rchrche)
         for critere in criteres:
