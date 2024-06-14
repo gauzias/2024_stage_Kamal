@@ -6,40 +6,40 @@ import nibabel as nib
 import nisnap
 import ants
 import os
-
+import re
 import glob
-
+import pandas as pd
 if __name__ == "__main__":
     #Conversion d'image nifti en numpy array en 3d
     input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w = nib.load('/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz')
     sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w = input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.get_fdata()
-    print(type(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[1,1,1]))
+    #print(type(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[1,1,1]))
 
     # On swap l'image
     sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot = np.transpose(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w, (0,1,2))[::-1,::1,::-1]
 
     #dimension de l'image
-    dim_sub_0001 = np.shape(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot)
-    print("lesexport dimensions de notre image :", dim_sub_0001)
+    #dim_sub_0001 = np.shape(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot)
+    #print("lesexport dimensions de notre image :", dim_sub_0001)
     #On selectionne plusieurs tranche de cette objet 3d pour en affiche le swapping
     # tranche z = 74
-    tranche_z = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[:, :, 74]
-    tranche_z_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[:, :, 74]
-    #tranche y = 74
-    tranche_y = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[:, 74, :]
-    tranche_y_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[:, 74, :]
-    #tranche x = 74
-    tranche_x = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[74,:,:]
-    tranche_x_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[74,:,:]
+    # tranche_z = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[:, :, 74]
+    # tranche_z_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[:, :, 74]
+    # #tranche y = 74
+    # tranche_y = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[:, 74, :]
+    # tranche_y_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[:, 74, :]
+    # #tranche x = 74
+    # tranche_x = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w[74,:,:]
+    # tranche_x_rot = sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot[74,:,:]
 
     #Affichage
-    plt.figure(1)
-    plt.subplot(1,2,1)
-    plt.imshow(tranche_z, cmap='gray')
-    plt.title("tranche z image origin")
-    plt.subplot(1,2,2)
-    plt.imshow(tranche_z_rot, cmap='bone')
-    plt.title("tranche z rot image origin")
+    # plt.figure(1)
+    # plt.subplot(1,2,1)
+    # plt.imshow(tranche_z, cmap='gray')
+    # plt.title("tranche z image origin")
+    # plt.subplot(1,2,2)
+    # plt.imshow(tranche_z_rot, cmap='bone')
+    # plt.title("tranche z rot image origin")
     #plt.show()
     #
     # plt.figure(2)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     #ON cacule grace à ants registration le WARP SYN nécessaire pour recaler une image A à image B
     #nii.gz image conversion pour ants :
-    img_path = os.path.join("/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/", "sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot.nii.gz")
+    img_path = os.path.join("/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot.nii.gz")
     img_sub_aligned_rot_ants = ants.image_read(img_path)
 
     #sub_2_temp_ro_r = ants.registration(fixed=fi, moving=img_sub_aligned_rot_ants, type_of_transform = 'SyN' )
@@ -88,24 +88,43 @@ if __name__ == "__main__":
 
     #Parcours d'un dossier pour trouver le bon atlas du bon(du bon âge), il faut un critère qu'on cherche à minimiser
 
-    path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/"
-    files = os.listdir(path_des_atlas)
-    files_atlas = list()
-    for f in files:
-        if "_all_reg_LR_dilM.nii.gz" in f:
-            files_atlas.append(f)
-    files_atlas.sort()
+
+    def Parcours_dossier_only_data_match(Path, nom_caracteristic : str):
+        files = os.listdir(Path)
+        files_atlas = list()
+        Pattern = re.compile(nom_caracteristic)
+        for f in files:
+            if Pattern.match(f):
+                files_atlas.append(f)
+        files_atlas.sort()
+        return files_atlas
+
+    Nom_caract = r'^STA\d+\.nii.gz'
+    path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
+    files_atlas = Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
+
+    #Pattern = re.compile(r'^STA\d+\.nii.gz')
     print(files_atlas)
     print(len(files_atlas))
 
+    def calcul_similarity_ants(img1, img2, critere):
+        similarite = ants.image_similarity(img1, img2, metric_type= critere)
+        return similarite
+    def Recalage_atlas_rigid(img_fix, atlas_mouv):
+        Warp_atlas = ants.registration(img_fix, atlas_mouv, type_of_transform= 'Rigid')
+        Atlas_Warped = ants.apply_transforms(img_fix, Warp_atlas, transformlist=Warp_atlas['fwdtransforms'])
+        return Atlas_Warped
 
-    max_similarite = -float('inf')
-    path_atlas_adapte = ""
+
+    criteres = ['MeanSquares', 'MattesMutualInformation', 'Correlation']
+
+
+    tableau_criteres_by_atlas = pd.DataFrame(index=files_atlas, columns=criteres)
     for atlas in files_atlas:
-        Atlas_rchrche =ants.image_read(os.path.abspath(atlas))
-        similarite = ants.image_similarity(img_sub_aligned_rot_ants, Atlas_rchrche)
-        if similarite > max_similarite:
-            max_similarite = similarite
-            path_atlas_adapte = os.path.abspath(atlas)
-    print(" similarité entre l'atlas adapté et l'image du sujet : ", max_similarite)
-    print("chemin vers l'atlas adapté:", path_atlas_adapte)
+        Atlas_rchrche = ants.image_read(os.path.abspath(atlas))
+        Atlas_Warped = Recalage_atlas_rigid(img_sub_aligned_rot_ants, Atlas_rchrche)
+        for critere in criteres:
+            print(type(critere))
+            tableau_criteres_by_atlas[critere] = calcul_similarity_ants(img_sub_aligned_rot_ants, Atlas_Warped, critere)
+    print(tableau_criteres_by_atlas)
+
