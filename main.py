@@ -70,25 +70,25 @@ if __name__ == "__main__":
     affine_source = input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.affine
     header_source = input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.header
     Sub_0001_template_masked_rot_nifti = nib.Nifti1Image(sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot,affine=affine_source, header = header_source )
-    print(input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.header)
-    print(Sub_0001_template_masked_rot_nifti.header)
+    #print(input_sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w.header)
+    #print(Sub_0001_template_masked_rot_nifti.header)
 
 
     # Enregistrer l'image NIfTI
-    path_pour_fichier_rot = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot.nii.gz"
+    path_pour_fichier_rot = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_des-aligned_T2w_rot.nii.gz"
     nib.save(Sub_0001_template_masked_rot_nifti, path_pour_fichier_rot)
 
-    #ON cacule grace à ants registration le WARP SYN nécessaire pour recaler une image A à image B
-    #nii.gz image conversion pour ants :
-    img_path = os.path.join("/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub_0001_ses_0001_acq_haste_rec_nesvor_desc_aligned_T2w_rot.nii.gz")
-    img_sub_aligned_rot_ants = ants.image_read(img_path)
+
+
 
     #sub_2_temp_ro_r = ants.registration(fixed=fi, moving=img_sub_aligned_rot_ants, type_of_transform = 'SyN' )
 
 
     #Parcours d'un dossier pour trouver le bon atlas du bon(du bon âge), il faut un critère qu'on cherche à minimiser
 
-
+    # nii.gz image conversion pour ants :
+    img_path = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz"
+    img_sub_aligned_ants = ants.image_read(img_path)
     def Parcours_dossier_only_data_match(Path, nom_caracteristic : str):
         files = os.listdir(Path)
         files_atlas = list()
@@ -103,28 +103,30 @@ if __name__ == "__main__":
     path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
     files_atlas = Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
 
-    #Pattern = re.compile(r'^STA\d+\.nii.gz')
+
     print(files_atlas)
     print(len(files_atlas))
 
     def calcul_similarity_ants(img1, img2, critere):
-        similarite = ants.image_similarity(img1, img2, metric_type= critere)
+        similarite = ants.image_similarity(img1, img2, metric_type=critere)
         return similarite
     def Recalage_atlas_rigid(img_fix, atlas_mouv):
-        Warp_atlas = ants.registration(img_fix, atlas_mouv, type_of_transform= 'Rigid')
-        Atlas_Warped = ants.apply_transforms(img_fix, Warp_atlas, transformlist=Warp_atlas['fwdtransforms'])
+        atlas_mouv_reshap = ants.resample_image_to_target(img_fix, atlas_mouv)
+        Warp_atlas = ants.registration(img_fix, atlas_mouv_reshap, 'Rigid')
+        Atlas_Warped = ants.apply_transforms(img_fix,atlas_mouv_reshap , transformlist=Warp_atlas['fwdtransforms'][0])
         return Atlas_Warped
 
 
     criteres = ['MeanSquares', 'MattesMutualInformation', 'Correlation']
-
+    simlarity= 0
 
     tableau_criteres_by_atlas = pd.DataFrame(index=files_atlas, columns=criteres)
     for atlas in files_atlas:
-        Atlas_rchrche = ants.image_read(os.path.abspath(atlas))
-        Atlas_Warped = Recalage_atlas_rigid(img_sub_aligned_rot_ants, Atlas_rchrche)
+        print(os.path.abspath(atlas))
+        Atlas_rchrche = ants.image_read(os.path.join(path_des_atlas,atlas))
+        Atlas_Warped = Recalage_atlas_rigid(img_sub_aligned_ants, Atlas_rchrche)
         for critere in criteres:
-            print(type(critere))
-            tableau_criteres_by_atlas[critere] = calcul_similarity_ants(img_sub_aligned_rot_ants, Atlas_Warped, critere)
+            similarity = calcul_similarity_ants(img_sub_aligned_ants, Atlas_Warped, critere)
+            tableau_criteres_by_atlas.loc[atlas, critere] = similarity
     print(tableau_criteres_by_atlas)
 

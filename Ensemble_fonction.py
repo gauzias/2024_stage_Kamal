@@ -4,7 +4,7 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import nibabel as nib
 import nisnap
-#import ants
+import ants
 import os
 import glob
 import re
@@ -24,6 +24,18 @@ def Parcours_dossier_only_data_match(Path, nom_caracteristic : str):
             files_atlas.append(f)
     files_atlas.sort()
     return files_atlas
+
+def calcul_similarity_ants(img1, img2, critere):
+    similarite = ants.image_similarity(img1, img2, metric_type=critere)
+    return similarite
+def Recalage_atlas_rigid(img_fix, atlas_mouv):
+    atlas_mouv_reshap = ants.resample_image_to_target(img_fix, atlas_mouv)
+    Warp_atlas = ants.registration(img_fix, atlas_mouv_reshap, 'Rigid')
+    Atlas_Warped = ants.apply_transforms(img_fix,atlas_mouv_reshap , transformlist=Warp_atlas['fwdtransforms'][0])
+    return Atlas_Warped
+
+
+
 
 
 if __name__ == "__main__":
