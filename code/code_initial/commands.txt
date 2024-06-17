@@ -9,8 +9,7 @@ antsRegistrationSyN.sh -d 3 -f srr_template_masked_ro.nii.gz -m sub-1018_ses-118
 #On determine la tranf necessaire par rapport au template_masked retourné
 
 antsApplyTransforms -d 3 -i STA31_all_reg_LR_dilM.nii.gz -r srr_template_masked.nii.gz -o STA31_all_reg_LR_dilM_rl.nii.gz -n NearestNeighbor
-#AntsApplytransforms permet d'appliquer la transformation trouvé par antsregistrasion, en choisisant une image en entré (-i) , une image de réference et une (-o) image en sortie pour récuperer l'image warped
-#Cependant on applique la transformation en prenant le template_masked non inversé et avec un choix de méthode d'interpilation, ici l'interpolation par plus proche voisin
+#Cette commande permet de faire un redimensionnement de l'image donnée en -i par rapport à l'image reference donnée en -r , on obtient en sorti -o l'image mise à niveau par rapport à l'image -r
 
 
 fslswapdim  STA31_all_reg_LR_dilM_rl.nii.gz  -x y -z STA31_all_reg_LR_dilM_rl_ro.nii.gz
