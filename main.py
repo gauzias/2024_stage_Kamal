@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
 
     # Enregistrer l'image NIfTI
-    path_pour_fichier_rot = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_des-aligned_T2w_rot.nii.gz"
+    path_pour_fichier_rot = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz"
     nib.save(Sub_0001_template_masked_rot_nifti, path_pour_fichier_rot)
 
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     #Parcours d'un dossier pour trouver le bon atlas du bon(du bon âge), il faut un critère qu'on cherche à minimiser
 
     # nii.gz image conversion pour ants :
-    img_path = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz"
+    img_path = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz"
     img_sub_aligned_ants = ants.image_read(img_path)
     def Parcours_dossier_only_data_match(Path, nom_caracteristic : str):
         files = os.listdir(Path)
@@ -102,8 +102,11 @@ if __name__ == "__main__":
     Nom_caract = r'^STA\d+\.nii.gz'
     path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
     files_atlas = Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
-
-
+    def SWAP_COPY_INFO_SAVE(img_input, path_img_rot_nifti):
+        img_input_array = nib.load(os.path.abspath(img_input)).get_fdata()  #trouver path,charger image nifti,conversion en array numpy
+        img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1] # x et z ont une transposé inverse et y une transposé
+        img_input_rot_nifti = nib.Nifti1Image(img_input_array_rot, nib.load(os.path.abspath(img_input)).affine, nib.load(os.path.abspath(img_input)).header)
+        nib.save(img_input_rot_nifti, path_img_rot_nifti)
     print(files_atlas)
     print(len(files_atlas))
 
@@ -111,22 +114,38 @@ if __name__ == "__main__":
         similarite = ants.image_similarity(img1, img2, metric_type=critere)
         return similarite
     def Recalage_atlas_rigid(img_fix, atlas_mouv):
-        atlas_mouv_reshap = ants.resample_image_to_target(img_fix, atlas_mouv)
-        Warp_atlas = ants.registration(img_fix, atlas_mouv_reshap, 'Rigid')
-        Atlas_Warped = ants.apply_transforms(img_fix,atlas_mouv_reshap , transformlist=Warp_atlas['fwdtransforms'][0])
-        return Atlas_Warped
 
-    sim_lui_meme = ants.image_similarity(img_sub_aligned_ants,img_sub_aligned_ants,  metric_type= 'Correlation')
-    print(sim_lui_meme)
+        Warp_atlas = ants.registration(img_fix, atlas_mouv, type_of_transform ='Rigid')
+        Atlas_Warped = ants.apply_transforms(img_fix,atlas_mouv, transformlist=Warp_atlas['fwdtransforms'],whichtoinvert=None)
+        return Atlas_Warped
+    # img_sub_aligned_ants2 = img_sub_aligned_ants.copy()
+    # sim_lui_meme = ants.image_similarity(img_sub_aligned_ants, img_sub_aligned_ants2 ,sampling_strategy='regular',  metric_type='MattesMutualInformation', sampling_percentage=1.)
+    # print(sim_lui_meme)
     criteres = ['MeanSquares', 'MattesMutualInformation', 'Correlation']
     simlarity= 0
 
     tableau_criteres_by_atlas = pd.DataFrame(index=files_atlas, columns=criteres)
-    for atlas in files_atlas:
-        Atlas_rchrche = ants.image_read(os.path.join(path_des_atlas,atlas))
-        Atlas_Warped = Recalage_atlas_rigid(img_sub_aligned_ants, Atlas_rchrche)
-        for critere in criteres:
-            similarity = calcul_similarity_ants(img_sub_aligned_ants, Atlas_Warped, critere)
-            tableau_criteres_by_atlas.loc[atlas, critere] = similarity
-    print(tableau_criteres_by_atlas)
+    # for atlas in files_atlas:
+    #    Atlas_rchrche = ants.image_read(os.path.join(path_des_atlas,atlas))
+    #    Atlas_Warped = Recalage_atlas_rigid(img_sub_aligned_ants, Atlas_rchrche)
+    #    for critere in criteres:
+    #       similarity = calcul_similarity_ants(img_sub_aligned_ants, Atlas_Warped, critere)
+    #       tableau_criteres_by_atlas.loc[atlas, critere] = similarity
+    # print(tableau_criteres_by_atlas)
 
+    #Fonction pour recaler sta34 à notre sujet 0001
+
+
+    Atlas_35 = ants.image_read(os.path.join(path_des_atlas,"STA34.nii.gz"))
+
+    SWAP_COPY_INFO_SAVE(os.path.join(path_des_atlas,"STA35.nii.gz"), "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2/STA34_rot.nii.gz")
+    Atlas_35_ROT = ants.image_read(os.path.join(path_des_atlas,"STA34_rot.nii.gz"))
+    plt.imshow(Atlas_35[60,:,:])
+    plt.show()
+    plt.imshow(Atlas_35_ROT[60,:,:])
+    plt.show()
+    Warped_atlas = Recalage_atlas_rigid(img_sub_aligned_ants, Atlas_35_ROT)
+    plt.imshow(Warped_atlas[60,:,:])
+    plt.show()
+    path_fct_rigid_recalage = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2/STA34_ROT_RECpy.nii.gz"
+    nib.save(Warped_atlas,path_fct_rigid_recalage)
