@@ -38,9 +38,16 @@ def copy_info_geo(img_recoit,img_give_copy):
 def creation_PATH_pour_fichier_swaper(list_path_sujet):
     list_path_sujet_rot = list()
     for path_in in list_path_sujet:
-        nom_initial= path_in #On ajoute au nom de l'image original un suffixe
-        img_out = os.path.join(os.path.dirname(path_in), f"{nom_initial}_rot.nii.gz")
-        list_path_sujet_rot.append(img_out)
+        repertoire = os.path.dirname(path_in)
+        fichier = os.path.basename(path_in)
+        if fichier.endswith(".nii.gz"):
+            nom_initial = fichier[:-7]
+            fin = ".nii.gz"
+        else:
+            nom_initial, fin = os.path.splitext(fichier)
+        path =os.path.join(repertoire , f"{nom_initial}_rot{fin}")
+
+        list_path_sujet_rot.append(path)
     return list_path_sujet_rot
 def swap_each_SUB(path_list_sujet,list_path_sujet_rot):
     for path_sujet,path_sujet_rot in zip (path_list_sujet,list_path_sujet_rot) :
@@ -66,12 +73,12 @@ def Recalage_atlas_rigid(atlas_fix, img_mouv):
     Warp_Sub = ants.registration(atlas_fix, img_mouv,type_of_transform ='Rigid')
     Sub_Warped = ants.apply_transforms(atlas_fix, img_mouv, transformlist=Warp_Sub['fwdtransforms'])
     return Sub_Warped
-def recup_atlas(path,fichier):
-    fichier_recup = ants.image_read(os.path.join(path, fichier))
+def recup_atlas(fichier):
+    fichier_recup = ants.image_read(os.path.join( fichier))
     return fichier_recup
-def recupAtlas_to_tableau_simil (tab2D, ligne, colonne, sujet_path):
+def recupAtlas_to_tableau_simil (tab2D, ligne, colonne, path):
     for atlas in ligne:
-        Atlas_recherche = recup_atlas(sujet_path,atlas)
+        Atlas_recherche = recup_atlas(path,atlas)
         Sujet_Warped = Recalage_atlas_rigid(Atlas_recherche, sujet)
         for critere in colonne:
             similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
@@ -124,24 +131,39 @@ if __name__ == "__main__":
     files_atlas = Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
 
     tab_path_sujet = recup_sujet(all_sujets_path,nom_general_sujet)
-    list_path_sujet_rot = creation_PATH_pour_fichier_swaper (tab_path_sujet)
-    swap_each_SUB(tab_path_sujet,list_path_sujet_rot)
+    print(tab_path_sujet )
+    list_path_sujet_rot = creation_PATH_pour_fichier_swaper(tab_path_sujet)
+    print(list_path_sujet_rot)
+    swap_each_SUB(tab_path_sujet, list_path_sujet_rot)
     tab_path_sujet_rot = recup_sujet(all_sujets_path, nom_general_sujet_rot)
-
+    print(tab_path_sujet_rot)
     criteres = ['MeanSquares', 'MattesMutualInformation', 'Correlation']
-    simlarity = 0
     tableau_criteres_by_atlas = tabs_1D_to_tab2D(files_atlas,criteres)
+    print("avant l'ecriture dans le fichier")
+    path_fichier = '/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/outputKamal.txt'
+    output_directory = '/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/'
+    if os.access(output_directory, os.W_OK ):
+        print(("le repertoire est accessible pour lecrire"))
+    else:
+        print("pas permis")
+    try :
+        with open(path_fichier, 'w') as f:
+            sys.stdout = f
+            for sujet_path in tab_path_sujet_rot:
+                tab2D_global = recupAtlas_to_tableau_simil(tableau_criteres_by_atlas, files_atlas, criteres, sujet_path)
+                print(tab2D_global)
+                min_ecart, max_MI, max_Correlation = Atlas_du_bon_age(tab2D_global)
+                print(f"l'atlas qui minimise l'equart à la moyenne est : {min_ecart} pour {sujet_path}\n",
+                      f"l'atlas qui maximise l'information mutuel est : {max_MI} pour {sujet_path}\n",
+                      f"l'atlas qui maximise la correlation est : {max_Correlation} pour {sujet_path}\n")
+            sys.stdout = sys.__stdout__
+            f.flush()
+            print("apres fichier ecrit")
+    except IOError as e:
+        print(f"erreur d'entree/sortie lors de l'écritute dans le fichier {e}")
+    except Exception as e:
+        print(f"erreur  lors de l'écritute dans le fichier {e}")
 
-    with open('/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/outputKamal.txt', 'w') as f:
-        sys.stdout = f
-        for sujet_path in tab_path_sujet_rot:
-            tab2D_global = recupAtlas_to_tableau_simil(tableau_criteres_by_atlas, files_atlas, criteres, sujet_path)
-            print(tab2D_global)
-            min_ecart, max_MI, max_Correlation = Atlas_du_bon_age(tab2D_global)
-            print(f"l'atlas qui minimise l'equart à la moyenne est : {min_ecart} pour {sujet_path}\n",
-                  f"l'atlas qui maximise l'information mutuel est : {max_MI} pour {sujet_path}\n",
-                  f"l'atlas qui maximise la correlation est : {max_Correlation} pour {sujet_path}\n")
-        sys.stdout = sys.__stdout__
 
 
 
