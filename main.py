@@ -72,14 +72,28 @@ def calcul_similarity_ants(img1, img2, critere):
 def Recalage_atlas_rigid(atlas_fix, img_mouv):
     Warp_Sub = ants.registration(atlas_fix, img_mouv,type_of_transform ='Rigid')
     Sub_Warped = ants.apply_transforms(atlas_fix, img_mouv, transformlist=Warp_Sub['fwdtransforms'])
+
     return Sub_Warped
-def recup_atlas(fichier):
-    fichier_recup = ants.image_read(os.path.join( fichier))
+def recup_atlas_sujet(path_repertoire,fichier):
+    fichier_recup = ants.image_read(os.path.join(path_repertoire, fichier))
     return fichier_recup
-def recupAtlas_to_tableau_simil (tab2D, ligne, colonne, path):
+def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
+    repertoire = list()
+    fichier = list()
+    for path in tab_path:
+        repertoire.append(os.path.dirname(path))
+        fichier.append(os.path.basename(path))
+    return repertoire, fichier
+def Enregistrer_img_ants_en_nifit(img,path_repertoire,nom_img):
+    path_abs = os.path.join(path_repertoire,nom_img)
+    ants.image_write(img,path_abs)
+
+def recupAtlas_to_tableau_simil (tab2D, ligne, colonne, path_atlas,sujet,sujet_repertoire):
+    sujet_ants = recup_atlas_sujet(sujet_repertoire,sujet)
+
     for atlas in ligne:
-        Atlas_recherche = recup_atlas(path,atlas)
-        Sujet_Warped = Recalage_atlas_rigid(Atlas_recherche, sujet)
+        Atlas_recherche = recup_atlas_sujet(path_atlas, atlas)
+        Sujet_Warped = Recalage_atlas_rigid(Atlas_recherche, sujet_ants)
         for critere in colonne:
             similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
             tab2D.loc[atlas, critere] = similarity
@@ -91,17 +105,32 @@ def Atlas_du_bon_age(tab_similarity):
     max_Correlation =  abs_tab['Correlation'].idxmax()
     return (min_ecart,max_MI,max_Correlation)
 
-def charger_le_meilleure(path_des_atlas, liste_atlas_pretendant):
+def retourne_bon_atlas(path_des_atlas, liste_atlas_pretendant):
     atlas1, atlas2, atlas3 = liste_atlas_pretendant
     if atlas1 == atlas2 or atlas1 == atlas3:
-        Atlas_pour_sujet = recup_atlas(atlas1)
+        Atlas_pour_sujet = recup_atlas_sujet(path_des_atlas,atlas1)
     else:
         if atlas2 == atlas3 or atlas2 == atlas1:
-            Atlas_pour_sujet = recup_atlas(atlas2)
+            Atlas_pour_sujet = recup_atlas_sujet(path_des_atlas,atlas2)
         else:
             print("aucun atlas ne réunis 2 critères")
     return Atlas_pour_sujet
+def recal_sujet_avc_bon_atlas_save(path_des_atlas, liste_atlas_pretendant,path_sujet,sujet,nom_general_sujet_rot):
+    bon_atlas = retourne_bon_atlas(path_des_atlas, liste_atlas_pretendant)
+    Atlas_pour_sujet_ants = ants.image_read(os.path.join(path_des_atlas,bon_atlas))
+    img_sub = ants.image_read(os.path.join(path_sujet,sujet))
+    img_sub_0019_recale = Recalage_atlas_rigid(Atlas_pour_sujet_ants,img_sub)
+    path_img_rot_rec =creation_chemin_nom_img_rot_rec(path_sujet,nom_general_sujet_rot)
+    Enregistrer_img_ants_en_nifit(img_sub_0019_recale,path_sujet,path_img_rot_rec )
 
+def creation_chemin_nom_img_rot_rec(path_repertoire,img_rot_name):
+    if img_rot_name.endswith(".nii.gz"):
+        nom_initial = img_rot_name[:-7]
+        fin = ".nii.gz"
+    else:
+        nom_initial, fin = os.path.splitext(img_rot_name)
+    path =os.path.join(path_repertoire, f"{nom_initial}_rec{fin}")
+    return path
 
 if __name__ == "__main__":
     #Conversion d'image nifti en numpy array en 3d
@@ -136,38 +165,61 @@ if __name__ == "__main__":
     print(list_path_sujet_rot)
     swap_each_SUB(tab_path_sujet, list_path_sujet_rot)
     tab_path_sujet_rot = recup_sujet(all_sujets_path, nom_general_sujet_rot)
-    print(tab_path_sujet_rot)
+    tab_repertoire,tab_img_sujet = path_abs_sujet_to_fichier_repertorie_sujet(tab_path_sujet_rot)
     criteres = ['MeanSquares', 'MattesMutualInformation', 'Correlation']
     tableau_criteres_by_atlas = tabs_1D_to_tab2D(files_atlas,criteres)
     print("avant l'ecriture dans le fichier")
     path_fichier = '/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/outputKamal.txt'
     output_directory = '/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/'
-    if os.access(output_directory, os.W_OK ):
-        print(("le repertoire est accessible pour lecrire"))
-    else:
-        print("pas permis")
-    try :
-        with open(path_fichier, 'w') as f:
-            sys.stdout = f
-            for sujet_path in tab_path_sujet_rot:
-                tab2D_global = recupAtlas_to_tableau_simil(tableau_criteres_by_atlas, files_atlas, criteres, sujet_path)
-                print(tab2D_global)
-                min_ecart, max_MI, max_Correlation = Atlas_du_bon_age(tab2D_global)
-                print(f"l'atlas qui minimise l'equart à la moyenne est : {min_ecart} pour {sujet_path}\n",
-                      f"l'atlas qui maximise l'information mutuel est : {max_MI} pour {sujet_path}\n",
-                      f"l'atlas qui maximise la correlation est : {max_Correlation} pour {sujet_path}\n")
-            sys.stdout = sys.__stdout__
-            f.flush()
-            print("apres fichier ecrit")
-    except IOError as e:
-        print(f"erreur d'entree/sortie lors de l'écritute dans le fichier {e}")
-    except Exception as e:
-        print(f"erreur  lors de l'écritute dans le fichier {e}")
+
+    repertoire = os.path.dirname(path_fichier)
+    fichier = os.path.basename(path_fichier)
+    print(repertoire)
+    print(fichier)
+    # if os.access(output_directory, os.W_OK ):
+    #     print(("le repertoire est accessible pour lecrire"))
+    # else:
+    #     print("pas permis")
+    # try :
+    #     with open(path_fichier, 'w') as f:
+    #         sys.stdout = f
+    #         for sujet,repertoire in zip(tab_img_sujet, tab_repertoire):
+    #
+    #             tab2D_global = recupAtlas_to_tableau_simil(tableau_criteres_by_atlas, files_atlas, criteres, path_des_atlas,sujet,repertoire)
+    #             print(tab2D_global)
+    #             min_ecart, max_MI, max_Correlation = Atlas_du_bon_age(tab2D_global)
+    #             print(f"l'atlas qui minimise l'equart à la moyenne est : {min_ecart} pour {sujet}\n",
+    #                   f"l'atlas qui maximise l'information mutuel est : {max_MI} pour {sujet}\n",
+    #                   f"l'atlas qui maximise la correlation est : {max_Correlation} pour {sujet}\n")
+    #         sys.stdout = sys.__stdout__
+    #         f.flush()
+    #         print("apres fichier ecrit")
+    # except IOError as e:
+    #     print(f"erreur d'entree/sortie lors de l'écritute dans le fichier {e}")
+    # except Exception as e:
+    #     print(f"erreur  lors de l'écritute dans le fichier {e}")
+
+    #on enregistre Sub0009_rot_rec
+    atlas_30 = "STA30.nii.gz"
+    path_img = "/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0009/ses-0012/haste/default_reconst/sub-0009_ses-0012_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz"
+    Atlas_30_ants = ants.image_read(os.path.join(path_des_atlas,atlas_30))
+    img_sub_0009 = ants.image_read(path_img)
+    img_sub_0009_recale = Recalage_atlas_rigid(Atlas_30_ants,img_sub_0009)
+    img_0009_rec_name = "sub-0009_ses-0012_acq-haste_rec-nesvor_desc-aligned_T2w_rot_rec.nii.gz"
+    path_repertoir_sujet_009 = "/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0009/ses-0012/haste/default_reconst"
+    Enregistrer_img_ants_en_nifit(img_sub_0009_recale,path_repertoir_sujet_009 ,img_0009_rec_name )
 
 
 
+    atlas_28 = "STA28.nii.gz"
+    path_img = "/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0019/ses-0022/haste/default_reconst/sub-0019_ses-0022_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz"
+    Atlas_28_ants = ants.image_read(os.path.join(path_des_atlas,atlas_28))
+    img_sub_0019 = ants.image_read(path_img)
+    img_sub_0019_recale = Recalage_atlas_rigid(Atlas_28_ants,img_sub_0019)
+    img_0019_rec_name = "sub-0019_ses-0022_acq-haste_rec-nesvor_desc-aligned_T2w_rot_rec.nii.gz"
+    path_repertoir_sujet_019 = "/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0019/ses-0022/haste/default_reconst"
+    Enregistrer_img_ants_en_nifit(img_sub_0019_recale,path_repertoir_sujet_019 ,img_0019_rec_name )
 
-   # print(tab)
 
     # print(tab_sujet)
     # sujet001_path = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-0001/ses-0001/haste/default_reconst/"
