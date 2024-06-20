@@ -110,6 +110,8 @@ def retourne_bon_atlas(path_des_atlas, liste_atlas_pretendant):
     if atlas1 == atlas2 :
         Atlas_pour_sujet = atlas1
     else:
+
+        Atlas_pour_sujet = atlas2
         print("aucun atlas ne réunis 2 critères")
     return Atlas_pour_sujet
 def recal_sujet_avc_bon_atlas_save(path_des_atlas, liste_atlas_pretendant,path_sujet,sujet,nom_general_sujet_rot):
@@ -180,13 +182,17 @@ if __name__ == "__main__":
     # try :
     #     with open(path_fichier, 'w') as f:
     #         sys.stdout = f
-    valeurs_sim_tous_sujets = list()
+
     List_atlas_finaux = list()
+    total_frame = []
     for sujet,repertoire in zip(tab_img_sujet, tab_repertoire):
 
         tab2D_global = recupAtlas_to_tableau_simil(tableau_criteres_by_atlas, files_atlas, criteres, path_des_atlas,sujet,repertoire, "Rigid")
-        #print(tab2D_global)
-        valeurs_sim_tous_sujets.append(tab2D_global)
+        print(tab2D_global)
+
+        tab2D_global_array = [tab2D_global.to_numpy()]
+        total_frame.append(tab2D_global_array)
+
         list_atlas_pretendant = Atlas_du_bon_age(tab2D_global)
         Atlas_max_MI, Atlas_max_Correlation = list_atlas_pretendant
         Atlas_final = retourne_bon_atlas(path_des_atlas,list_atlas_pretendant)
@@ -201,11 +207,11 @@ if __name__ == "__main__":
     #     print(f"erreur d'entree/sortie lors de l'écritute dans le fichier {e}")
     # except Exception as e:
     #     print(f"erreur  lors de l'écritute dans le fichier {e}")
-    Tab_Atlas_final_by_sujet= pd.DataFrame(index=tab_img_sujet, columns=List_atlas_finaux)
-    combi_valeurs_sim_tous_sujets = pd.concat(valeurs_sim_tous_sujets, axis=1)
-    combi_valeurs_sim_tous_sujets_array = combi_valeurs_sim_tous_sujets.to_numpy()
-    print(combi_valeurs_sim_tous_sujets_array)
-    print(Tab_Atlas_final_by_sujet)
+
+    print(total_frame)
+
+
+
     # #on enregistre Sub0009_rot_rec
     # atlas_30 = "STA30.nii.gz"
     # path_img = "/home/achalhi.k/Bureau/Lien vers 2024_Kamal/real_data/lastest_nesvor/sub-0009/ses-0012/haste/default_reconst/sub-0009_ses-0012_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz"
