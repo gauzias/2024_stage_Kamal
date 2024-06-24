@@ -23,13 +23,11 @@ def recup_sujet(all_sujets_path, nom_general_sujet):
     return file_path
 
 def SWAP_COPY_INFO_SAVE(path_img_input, path_img_rot_nifti):
-    img_input_array = recup_img_sujet_array(path_img_input)
+    img_input_array = nib.load(path_img_input).get_fdata()
     img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1] # x et z ont une transposé inverse et y une transposé
     img_input_rot_nifti = copy_info_geo(img_input_array_rot, path_img_input)
     nib.save(img_input_rot_nifti, path_img_rot_nifti)
-def recup_img_sujet_array(path_img_input):
-    img_input_array = nib.load(path_img_input).get_fdata()  #trouver path,charger image nifti,conversion en array numpy
-    return img_input_array
+
 def copy_info_geo(img_recoit, img_give_copy):
     return nib.Nifti1Image(img_recoit, nib.load(os.path.abspath(img_give_copy)).affine, nib.load(os.path.abspath(img_give_copy)).header)
 def creation_PATH_pour_fichier_swaper(list_path_sujet):
@@ -88,7 +86,6 @@ def Enregistrer_img_ants_en_nifit(img,path_repertoire, nom_img):
 
 def recupAtlas_to_tableau_simil (tab2D, ligne, colonne, path_atlas, sujet, sujet_repertoire, type_transfo):
     sujet_ants = recup_atlas_sujet(sujet_repertoire, sujet)
-
     for atlas in ligne:
         Atlas_recherche = recup_atlas_sujet(path_atlas, atlas)
         Sujet_Warped = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo)
@@ -104,10 +101,8 @@ def Atlas_du_bon_age(tab_similarity):
 
 def retourne_bon_atlas(liste_atlas_pretendant):
     atlas1, atlas2 = liste_atlas_pretendant
-    if atlas1 == atlas2:
-        Atlas_pour_sujet = atlas1
-    else:
-        Atlas_pour_sujet = atlas1
+    Atlas_pour_sujet = atlas1
+    if atlas1 != atlas2:
         print("aucun atlas ne réunis 2 critères")
     return Atlas_pour_sujet
 def recal_sujet_avc_bon_atlas_save(path_des_atlas, liste_atlas_pretendant,path_sujet, sujet, nom_general_sujet_rot):
@@ -167,7 +162,7 @@ if __name__ == "__main__":
               f"l'atlas qui maximise la correlation est : {Atlas_max_Correlation} pour {sujet}\n")
 
     print(total_frame)
-    tableau_bon_atlas_by_sujet = list(zip(tab_img_sujet, List_atlas_finaux))
+    tableau_bon_atlas_by_sujet = [tab_img_sujet, List_atlas_finaux]
     print(tableau_bon_atlas_by_sujet)
 
     fin = time.time()
