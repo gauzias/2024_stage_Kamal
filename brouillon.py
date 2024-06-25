@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import nibabel as nib
 import ants
+import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 
@@ -48,9 +49,9 @@ def tabs_1D_to_tab2D(donnee_ligne, donnee_colonne):
 def calcul_similarity_ants(img1, img2, critere):
     return ants.image_similarity(img1, img2, metric_type=critere)
 
-def Recalage_atlas(atlas_fix, img_mouv, type_transfo):
+def Recalage_atlas(atlas_fix, img_mouv, type_transfo, masque):
     warp_sub = ants.registration(atlas_fix, img_mouv, type_transfo)
-    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'][0])
+    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'][0],interpolator = 'nearestNeighbor', mask = masque )
 def Inv_Recalage_atlas(atlas, img_mouv,type_transfo) :
     warp_sub = ants.registration(img_mouv, atlas,   type_transfo)
     return ants.apply_transforms(img_mouv, atlas,   transformlist=warp_sub['fwdtransforms'], interpolator = 'nearestNeighbor')
@@ -145,39 +146,67 @@ if __name__ == "__main__":
     (tab_img_sujet), (List_atlas_finaux) = tableau_bon_atlas_by_sujet
     #On cherche à recaler l'atlas sur l'image (une inversion du recalage), nous utilisons cette fois l'atlas segmenté
     #NOM des ATLAS SEGMENTÉ
-    nom_atlas_segm = 'r^STA\d+\_all_reg_LR_dilM.nii.gz'
-    path_des_atlas_segm = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
-    les_atlas_segm = []
+    nom_atlas_binary = 'r^STA\d+\_all_reg_LR_dilM.nii.gz'
+    path_des_atlas_binary = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
+    les_atlas_binary = []
     SUB_rec_by_Atlas_PATH = []
     for atlas in List_atlas_finaux :
         nom, fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
         numero_atlas = nom.split('STA')[1]
         print(numero_atlas)
-        les_atlas_segm.append(f'STA{numero_atlas}_all_reg_LR_dilM.nii.gz')
-    for sujet, repertoire, atlas in zip(tab_img_sujet, tab_repertoire, les_atlas_segm):
+        les_atlas_binary.append(f'STA{numero_atlas}_all_reg_LR_dilM.nii.gz')
+    for sujet, repertoire, atlas in zip(tab_img_sujet, tab_repertoire, les_atlas_binary):
         Sujet_fixe = ants.image_read(os.path.join(repertoire, sujet))
-        Atlas_segm = ants.image_read(os.path.join(path_des_atlas_segm, atlas))
-        SUB_recal_atlas_segm = Inv_Recalage_atlas(Atlas_segm,Sujet_fixe,  "Rigid")
-        path_sub_recale_by_atlas_segm = creation_chemin_nom_img_rot_rec(repertoire, sujet, atlas)
-        SUB_rec_by_Atlas_PATH.append(path_sub_recale_by_atlas_segm)
-        Enregistrer_img_ants_en_nifit(SUB_recal_atlas_segm, os.path.join(repertoire, sujet), path_sub_recale_by_atlas_segm)
+        Atlas_binary = ants.image_read(os.path.join(path_des_atlas_binary, atlas))
+        SUB_recal_atlas_segm = Inv_Recalage_atlas(Atlas_binary,Sujet_fixe,  "Rigid")
+        path_sub_recale_by_atlas_binary = creation_chemin_nom_img_rot_rec(repertoire, sujet, atlas)
+        SUB_rec_by_Atlas_PATH.append(path_sub_recale_by_atlas_binary)
+        Enregistrer_img_ants_en_nifit(SUB_recal_atlas_segm, os.path.join(repertoire, sujet), path_sub_recale_by_atlas_binary)
 
 
         #Seuillage par hemisphère et importer image segmenter
-    print(SUB_rec_by_Atlas_PATH)
+
     list_repertoire, list_image_sub_recal =path_abs_sujet_to_fichier_repertorie_sujet(SUB_rec_by_Atlas_PATH)
-    print(list_repertoire, list_image_sub_recal)
+
+    list_path_threshold = []
     for image_sub_recal, repertoire in zip(list_image_sub_recal, list_repertoire):
-        print(image_sub_recal, repertoire)
         Image_recal_array = nib.load(os.path.join(repertoire, image_sub_recal)).get_fdata()
         Image_recal_array[Image_recal_array == 2] = 10
         Image_recal_array[Image_recal_array != 10] = 0
         path_image_threshold = creation_chemin_nom_img_threshold(repertoire, image_sub_recal, "seg_L_only_x10")
+        list_path_threshold.append(path_image_threshold)
         Image_recal_threshold = nib.Nifti1Image(Image_recal_array, affine=np.eye(4))
         nib.save(Image_recal_threshold, path_image_threshold)
 
 
+    #Recuperation des images segmentés :
 
+    repertoire_sujet_seg = r'/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor'
+    nom_mask_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-brainmask_T2w.nii.gz'
+    pattern = re.compile(nom_general_sujet)
+    path_sujet_segment= [os.path.join(root, s)
+                  for root, _, files in os.walk(all_sujets_path)
+                  for s in files if pattern.match(s) and root == all_sujets_path]
+    pattern_mask = re.compile(nom_mask_sujet)
+    list_path_sujet_mask= [os.path.join(root, s)
+                  for root, _, files in os.walk(all_sujets_path)
+                  for s in files if pattern_mask.match(s)]
+    list_path_img_segmente_rot = creation_PATH_pour_fichier_swaper(path_sujet_segment)
+    swap_each_SUB(path_sujet_segment, list_path_img_segmente_rot)
+    list_repertoire_segm_bin, list_image_sub_segm_bin =path_abs_sujet_to_fichier_repertorie_sujet(list_path_img_segmente_rot )
+
+    for path_sujet_segm_rot, path_image_sub_binaryse, sujet, repertoire, mask_path in zip(list_path_img_segmente_rot, list_path_threshold,list_image_sub_segm_bin, list_repertoire_segm_bin,list_path_sujet_mask):
+        Masque_sujet = ants.image_read(mask_path)
+        Img_sujet_segmente = ants.image_read(path_sujet_segm_rot)
+        Img_sujet_binarise = ants.image_read(path_image_sub_binaryse)
+        Img_sujet_binarise_recal = Recalage_atlas(Img_sujet_segmente, Img_sujet_binarise,"Rigid",Masque_sujet)
+        Img_sujet_segmente_array = Img_sujet_segmente.numpy()
+        Img_sujet_segm_binar_combined_array = Img_sujet_segmente_array.copy()
+        Img_sujet_binarise_recal_array = Img_sujet_binarise_recal.numpy()
+        Img_sujet_segm_binar_combined_array = Img_sujet_segmente_array + Img_sujet_binarise_recal_array
+        Img_sujet_segm_binar_combined = ants.from_numpy(Img_sujet_segm_binar_combined_array, origin=Img_sujet_segmente.origin, spacing=Img_sujet_segmente.spacing, direction=Img_sujet_segmente.direction)
+        path_img_final = creation_chemin_nom_img_threshold(repertoire, sujet, "segmentation_LR")
+        ants.image_write(Img_sujet_segm_binar_combined, path_img_final)
 
 
 
