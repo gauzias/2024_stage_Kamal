@@ -53,7 +53,7 @@ def Recalage_atlas(atlas_fix, img_mouv, type_transfo):
     return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'][0])
 def Inv_Recalage_atlas(atlas, img_mouv,type_transfo) :
     warp_sub = ants.registration(img_mouv, atlas,   type_transfo)
-    return ants.apply_transforms(img_mouv, atlas,   transformlist=warp_sub['fwdtransforms'][0])
+    return ants.apply_transforms(img_mouv, atlas,   transformlist=warp_sub['fwdtransforms'], interpolator = 'nearestNeighbor')
 
 def recup_atlas_sujet(path_repertoire, fichier):
     return ants.image_read(os.path.join(path_repertoire, fichier))
@@ -97,8 +97,12 @@ def recal_sujet_avc_bon_atlas_save(path_des_atlas, bon_atlas, path_sujet, sujet,
 def creation_chemin_nom_img_rot_rec(path_repertoire, img_rot_name, nom_atlas_segm : str):
 
     nom_initial, fin = (img_rot_name[:-7], ".nii.gz") if img_rot_name.endswith(".nii.gz") else os.path.splitext(img_rot_name)
-    return os.path.join(path_repertoire, f"{nom_initial}_{nom_atlas_segm}{fin}")
+    return os.path.join(path_repertoire, f"{nom_initial}_{nom_atlas_segm}")
 
+def creation_chemin_nom_img_threshold(path_repertoire, img, nom_atlas_threshold : str):
+
+    nom_initial, fin = (img[:-7], ".nii.gz") if img.endswith(".nii.gz") else os.path.splitext(img)
+    return os.path.join(path_repertoire, f"{nom_initial}_{nom_atlas_threshold}{fin}")
 if __name__ == "__main__":
     debut = time.time()
 
@@ -144,17 +148,43 @@ if __name__ == "__main__":
     nom_atlas_segm = 'r^STA\d+\_all_reg_LR_dilM.nii.gz'
     path_des_atlas_segm = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
     les_atlas_segm = []
+    SUB_rec_by_Atlas_PATH = []
     for atlas in List_atlas_finaux :
-        nom,fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
+        nom, fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
         numero_atlas = nom.split('STA')[1]
-        print(numero_atlas )
+        print(numero_atlas)
         les_atlas_segm.append(f'STA{numero_atlas}_all_reg_LR_dilM.nii.gz')
     for sujet, repertoire, atlas in zip(tab_img_sujet, tab_repertoire, les_atlas_segm):
         Sujet_fixe = ants.image_read(os.path.join(repertoire, sujet))
         Atlas_segm = ants.image_read(os.path.join(path_des_atlas_segm, atlas))
         SUB_recal_atlas_segm = Inv_Recalage_atlas(Atlas_segm,Sujet_fixe,  "Rigid")
         path_sub_recale_by_atlas_segm = creation_chemin_nom_img_rot_rec(repertoire, sujet, atlas)
+        SUB_rec_by_Atlas_PATH.append(path_sub_recale_by_atlas_segm)
         Enregistrer_img_ants_en_nifit(SUB_recal_atlas_segm, os.path.join(repertoire, sujet), path_sub_recale_by_atlas_segm)
+
+
+        #Seuillage par hemisphère et importer image segmenter
+    print(SUB_rec_by_Atlas_PATH)
+    list_repertoire, list_image_sub_recal =path_abs_sujet_to_fichier_repertorie_sujet(SUB_rec_by_Atlas_PATH)
+    print(list_repertoire, list_image_sub_recal)
+    for image_sub_recal, repertoire in zip(list_image_sub_recal, list_repertoire):
+        print(image_sub_recal, repertoire)
+        Image_recal_array = nib.load(os.path.join(repertoire, image_sub_recal)).get_fdata()
+        Image_recal_array[Image_recal_array == 2] = 10
+        Image_recal_array[Image_recal_array != 10] = 0
+        path_image_threshold = creation_chemin_nom_img_threshold(repertoire, image_sub_recal, "seg_L_only_x10")
+        Image_recal_threshold = nib.Nifti1Image(Image_recal_array, affine=np.eye(4))
+        nib.save(Image_recal_threshold, path_image_threshold)
+
+
+
+
+
+
+
+
+
+
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
