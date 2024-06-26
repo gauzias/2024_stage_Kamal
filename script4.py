@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
 
-if __name__ == "__main__":
+def etape4():
     debut = time.time()
 
     nom_general_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz'
@@ -47,3 +47,9 @@ if __name__ == "__main__":
         Img_sujet_segm_binar_combined = ants.from_numpy(Img_sujet_segm_binar_combined_array, origin=Img_sujet_segmente.origin, spacing=Img_sujet_segmente.spacing, direction=Img_sujet_segmente.direction)
         path_img_final = creation_chemin_nom_img_threshold(repertoire, sujet, "segmentation_LR")
         ants.image_write(Img_sujet_segm_binar_combined, path_img_final)
+    fin = time.time()
+    tps_excecution = fin - debut
+    print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
+
+if __name__ == "__main__":
+    etape4()

@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
 
-if __name__ == "__main__":
+def etape3():
     debut = time.time()
 
     nom_general_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz'
@@ -30,3 +30,12 @@ if __name__ == "__main__":
         list_path_threshold.append(path_image_threshold)
         Image_recal_threshold = nib.Nifti1Image(Image_recal_array, affine=np.eye(4))
         nib.save(Image_recal_threshold, path_image_threshold)
+    fin = time.time()
+    tps_excecution = fin - debut
+    print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
+if __name__ == "__main__":
+    etape3()
+
+
+
+

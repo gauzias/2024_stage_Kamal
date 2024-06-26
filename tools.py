@@ -11,7 +11,7 @@ def recup_sujet(all_sujets_path, nom_general_sujet):
     pattern = re.compile(nom_general_sujet)
     file_paths = [os.path.join(root, s)
                   for root, _, files in os.walk(all_sujets_path)
-                  for s in files if pattern.match(s) ] #and root != all_sujets_path
+                  for s in files if pattern.match(s) and root != all_sujets_path]
     return sorted(file_paths)
 
 
@@ -60,23 +60,27 @@ def Enregistrer_img_ants_en_nifit(img, path_repertoire, nom_img):
 
 def recupAtlas_to_tableau_simil(lignes_atlas,criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
     tab2D = pd.DataFrame(index=lignes_atlas, columns=criteres)
-    print(tab2D)
     sujet_ants = ants.image_read(os.path.join(sujet_repertoire,sujet))
-    print(type(sujet_ants))
+    list_inv_warp = []
     for atlas in lignes_atlas:
         Atlas_recherche = ants.image_read(os.path.join(path_atlas, atlas))
         Sujet_Warped, inv_warp = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
+        list_inv_warp.append(inv_warp)
         for critere in criteres :
             tab2D.loc[atlas, critere] = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
-    bon_atlas = Atlas_du_bon_age(tab2D)
-    return tab2D, bon_atlas
+        bon_atlas, indice_bon_atlas = Atlas_du_bon_age(tab2D)
+    return tab2D, bon_atlas, list_inv_warp[indice_bon_atlas]
 
-def recup_fct_invers_application (atlas, sujet, new_cible, type_transfo, interpolator):
-    warp_sub = ants.registration(sujet, atlas, type_transfo)
-    new_cible_warped = ants.apply_transforms()
+
+# def recup_fct_invers_application (atlas, sujet, new_cible, type_transfo, interpolator):
+#     warp_sub = ants.registration(atlas, sujet, type_transfo)
+#     new_cible_warped = ants.apply_transforms(sujet, new_cible, transformlist=warp_sub['invtransforms'], interpolator=interpolator)
+#     return new_cible_warped
 def Atlas_du_bon_age(tab_similarity):
     abs_tab = tab_similarity.abs()
-    return abs_tab['MattesMutualInformation'].idxmax()
+    max = abs_tab['MattesMutualInformation'].idxmax()
+    indice = tab_similarity.index.get_loc(max)
+    return max, indice
 
 # def recal_sujet_avc_bon_atlas_save(path_des_atlas, bon_atlas, path_sujet, sujet, nom_general_sujet_rot):
 #     Atlas_pour_sujet_ants = ants.image_read(os.path.join(path_des_atlas, bon_atlas))
@@ -85,7 +89,7 @@ def Atlas_du_bon_age(tab_similarity):
 #     path_img_rot_rec = creation_chemin_nom_img(path_sujet, img_sub_recale, nom_general_sujet_rot)
 #     Enregistrer_img_ants_en_nifit(img_sub_recale, path_sujet, path_img_rot_rec)
 
-def creation_chemin_nom_img(path_repertoire_output, img_rot_name, nom_image: str):
+def creation_chemin_nom_img(path_repertoire_output, img_rot_name, suffix_nom_image: str):
     nom_initial, fin = (img_rot_name[:-7], ".nii.gz") if img_rot_name.endswith(".nii.gz") else os.path.splitext(img_rot_name)
-    return os.path.join(path_repertoire_output, f"{nom_initial}_{nom_image}")
+    return os.path.join(path_repertoire_output, f"{nom_initial}_{suffix_nom_image}.nii.gz")
 
