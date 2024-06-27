@@ -46,8 +46,8 @@ def calcul_similarity_ants(img1, img2, critere):
 
 
 def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator):
-    warp_sub = ants.registration(atlas_fix, img_mouv, type_transfo)
-    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'], interpolator= interpolator), warp_sub['invtransforms']
+    warp_sub = ants.registration(atlas_fix, img_mouv, type_of_transformation = type_transfo)
+    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'][0], interpolator= interpolator), warp_sub
 
 
 def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
@@ -60,13 +60,13 @@ def Enregistrer_img_ants_en_nifit(img, path_repertoire, nom_img):
 
 def recupAtlas_to_tableau_simil(lignes_atlas,criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
     tab2D = pd.DataFrame(index=lignes_atlas, columns=criteres)
-    sujet_ants = ants.image_read(os.path.join(sujet_repertoire,sujet))
+    sujet_ants = ants.image_read(os.path.join(sujet_repertoire, sujet))
     list_inv_warp = []
     for atlas in lignes_atlas:
         Atlas_recherche = ants.image_read(os.path.join(path_atlas, atlas))
         Sujet_Warped, inv_warp = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
         list_inv_warp.append(inv_warp)
-        for critere in criteres :
+        for critere in criteres:
             tab2D.loc[atlas, critere] = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
         bon_atlas, indice_bon_atlas = Atlas_du_bon_age(tab2D)
     return tab2D, bon_atlas, list_inv_warp[indice_bon_atlas]
@@ -89,7 +89,7 @@ def Atlas_du_bon_age(tab_similarity):
 #     path_img_rot_rec = creation_chemin_nom_img(path_sujet, img_sub_recale, nom_general_sujet_rot)
 #     Enregistrer_img_ants_en_nifit(img_sub_recale, path_sujet, path_img_rot_rec)
 
-def creation_chemin_nom_img(path_repertoire_output, img_rot_name, suffix_nom_image: str):
-    nom_initial, fin = (img_rot_name[:-7], ".nii.gz") if img_rot_name.endswith(".nii.gz") else os.path.splitext(img_rot_name)
-    return os.path.join(path_repertoire_output, f"{nom_initial}_{suffix_nom_image}.nii.gz")
+def creation_chemin_nom_img(path_repertoire_output, img_name, suffix_nom_image: str):
+    nom_initial, fin = (img_name[:-7], ".nii.gz") if img_name.endswith(".nii.gz") else os.path.splitext(img_name)
+    return os.path.join(path_repertoire_output, f"{nom_initial}_{suffix_nom_image}")
 

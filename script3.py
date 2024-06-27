@@ -21,7 +21,7 @@ def etape3():
         Image_recal_array = nib.load(os.path.join(repertoire, image_sub_recal)).get_fdata()
         Image_recal_array[Image_recal_array == 2] = 10
         Image_recal_array[Image_recal_array != 10] = 0
-        path_image_threshold = tls.creation_chemin_nom_img_threshold(path_output, image_sub_recal, "seg_L_only_x10")
+        path_image_threshold = tls.creation_chemin_nom_img(path_output, image_sub_recal, "seg_L_only_x10.nii.gz")
         list_path_threshold.append(path_image_threshold)
         Image_recal_threshold = nib.Nifti1Image(Image_recal_array, affine=np.eye(4))
         nib.save(Image_recal_threshold, path_image_threshold)
