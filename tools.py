@@ -45,9 +45,12 @@ def calcul_similarity_ants(img1, img2, critere):
     return ants.image_similarity(img1, img2, metric_type=critere)
 
 
-def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator):
-    warp_sub = ants.registration(atlas_fix, img_mouv, type_of_transformation = type_transfo)
-    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'][0], interpolator= interpolator), warp_sub
+def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator, file_transfo_direct, file_transfo_inv):
+    warp_sub = ants.registration(atlas_fix, img_mouv, type_of_transform=type_transfo, outprefix =file_transfo_direct )
+
+    inv_warp = ants.registration(img_mouv, atlas_fix, type_of_transform=type_transfo,outprefix =file_transfo_inv )
+
+    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'], interpolator=interpolator), inv_warp
 
 
 def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
@@ -58,24 +61,21 @@ def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
 def Enregistrer_img_ants_en_nifit(img, path_repertoire, nom_img):
     ants.image_write(img, os.path.join(path_repertoire, nom_img))
 
-def recupAtlas_to_tableau_simil(lignes_atlas,criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
+def recupAtlas_to_tableau_simil(lignes_atlas,criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv):
     tab2D = pd.DataFrame(index=lignes_atlas, columns=criteres)
-    sujet_ants = ants.image_read(os.path.join(sujet_repertoire, sujet))
-    list_inv_warp = []
+    print(sujet)
+    sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)), reorient=True)
+    list_warp = []
     for atlas in lignes_atlas:
-        Atlas_recherche = ants.image_read(os.path.join(path_atlas, atlas))
-        Sujet_Warped, inv_warp = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
-        list_inv_warp.append(inv_warp)
+        Atlas_recherche = ants.image_read((os.path.join(path_atlas, atlas)), reorient=True)
+        Sujet_Warped, warp = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation,file_transfo_direct, file_transfo_inv)
+        list_warp.append(warp)
         for critere in criteres:
-            tab2D.loc[atlas, critere] = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
-        bon_atlas, indice_bon_atlas = Atlas_du_bon_age(tab2D)
-    return tab2D, bon_atlas, list_inv_warp[indice_bon_atlas]
+            similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
+            tab2D.loc[atlas, critere] = similarity
+    bon_atlas, indice_bon_atlas = Atlas_du_bon_age(tab2D)
+    return tab2D, bon_atlas, list_warp[indice_bon_atlas]
 
-
-# def recup_fct_invers_application (atlas, sujet, new_cible, type_transfo, interpolator):
-#     warp_sub = ants.registration(atlas, sujet, type_transfo)
-#     new_cible_warped = ants.apply_transforms(sujet, new_cible, transformlist=warp_sub['invtransforms'], interpolator=interpolator)
-#     return new_cible_warped
 def Atlas_du_bon_age(tab_similarity):
     abs_tab = tab_similarity.abs()
     max = abs_tab['MattesMutualInformation'].idxmax()

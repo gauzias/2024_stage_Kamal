@@ -9,14 +9,13 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
-from script1 import List_atlas_finaux, tab_img_sujet, list_warp_inv
-
-SUB_rec_by_Atlas_PATH = []
+# from shared_module import List_atlas_finaux, tab_img_sujet, list_warp_inv, SUB_rec_by_Atlas_PATH
 
 
 
-def etape2():
-    global SUB_rec_by_Atlas_PATH
+
+
+def etape2(list_atlas_finaux):
     debut = time.time()
     print(List_atlas_finaux)
     path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
@@ -35,7 +34,7 @@ def etape2():
     for sujet, atlas_binar, warp in zip(tab_img_sujet, les_atlas_binary, list_warp_inv):
         Sujet_fixe = ants.image_read(os.path.join(path_repertoire_sujet_rot, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_binary, atlas_binar))
-        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=warp['invtransforms'], interpolator= "nearestNeighbor")
+        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=warp['fwdtransforms'], interpolator= "nearestNeighbor")
         path_atlas_binary_warped = tls.creation_chemin_nom_img(path_output_repertoire, sujet, atlas_binar)
         SUB_rec_by_Atlas_PATH.append(path_atlas_binary_warped)
         ants.image_write(Atlas_binary_warped, path_atlas_binary_warped)
@@ -43,5 +42,10 @@ def etape2():
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
     return SUB_rec_by_Atlas_PATH
-# if __name__ == "__main__":
-etape2()
+
+
+if __name__ == "__main__":
+    path_variables = "/home/achalhi.k/2024_stage_Kamal/variables"
+    list_atlas_finaux = np.load(os.path.join(path_variables, "list_atlas_finaux.npy"))
+    print(list_atlas_finaux)
+    #etape2(list_atlas_finaux)

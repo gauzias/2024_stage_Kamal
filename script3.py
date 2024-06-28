@@ -9,11 +9,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
-from script2 import SUB_rec_by_Atlas_PATH
+# from shared_module import SUB_rec_by_Atlas_PATH, list_path_threshold
 
-list_path_threshold = []
+
 def etape3():
-    global list_path_threshold
     debut = time.time()
     path_output = "/envau/work/meca/users/2024_Kamal/output/output_script3"
     list_repertoire, list_image_sub_recal = tls.path_abs_sujet_to_fichier_repertorie_sujet(SUB_rec_by_Atlas_PATH)
