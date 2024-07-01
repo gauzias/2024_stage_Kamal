@@ -9,32 +9,26 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
-# from shared_module import List_atlas_finaux, tab_img_sujet, list_warp_inv, SUB_rec_by_Atlas_PATH
 
 
-
-
-
-def etape2(list_atlas_finaux):
+def etape2(path_des_atlas_binary, list_atlas_finaux,tab_img_sujet,list_tranf_direc,list_tranf_inv,path_repertoire_sujet_rot,path_output_repertoire ):
     debut = time.time()
-    print(List_atlas_finaux)
-    path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
-    path_output_repertoire = "/envau/work/meca/users/2024_Kamal/output/output_script2"
     #On cherche à recaler l'atlas sur l'image (une inversion du recalage), nous utilisons cette fois l'atlas binar
     #NOM des ATLAS Binairs
-    path_des_atlas_binary = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
+
     les_atlas_binary = []
-    for atlas in List_atlas_finaux:
+    for atlas in list_atlas_finaux:
         nom, fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
         numero_atlas = nom.split('STA')[1]
         print(numero_atlas)
         les_atlas_binary.append(f'STA{numero_atlas}_all_reg_LR_dilM{fin}')
 
-
-    for sujet, atlas_binar, warp in zip(tab_img_sujet, les_atlas_binary, list_warp_inv):
+    SUB_rec_by_Atlas_PATH = []
+    for sujet, atlas_binar, warp in zip(tab_img_sujet, les_atlas_binary, list_tranf_inv):
         Sujet_fixe = ants.image_read(os.path.join(path_repertoire_sujet_rot, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_binary, atlas_binar))
-        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=warp['fwdtransforms'], interpolator= "nearestNeighbor")
+        transfo =warp + "_Inverse_0GenericAffine.mat"
+        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=transfo, interpolator= "nearestNeighbor")
         path_atlas_binary_warped = tls.creation_chemin_nom_img(path_output_repertoire, sujet, atlas_binar)
         SUB_rec_by_Atlas_PATH.append(path_atlas_binary_warped)
         ants.image_write(Atlas_binary_warped, path_atlas_binary_warped)
@@ -45,7 +39,25 @@ def etape2(list_atlas_finaux):
 
 
 if __name__ == "__main__":
+    path_des_atlas_binary = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
     path_variables = "/home/achalhi.k/2024_stage_Kamal/variables"
+    path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
+    path_output_repertoire = "/envau/work/meca/users/2024_Kamal/output/output_script2"
     list_atlas_finaux = np.load(os.path.join(path_variables, "list_atlas_finaux.npy"))
-    print(list_atlas_finaux)
+    tab_img_sujet = np.load(os.path.join(path_variables, "tab_img_sujet.npy"))
+    list_tranf_direc =  np.load(os.path.join(path_variables, "list_tranf_direc.npy"))
+    list_tranf_inv = np.load(os.path.join(path_variables, "list_tranf_inv.npy"))
+    # transfo_test = ants.read_transform(list_tranf_direc[0]+"0GenericAffine.mat")
+    # trasnfo_test_mat = np.reshape(transfo_test.parameters, (4,3))
+    # transfo_test_inv = ants.read_transform(list_tranf_inv[0]+"0GenericAffine.mat")
+    # trasnfo_test_inv_mat = np.reshape(transfo_test_inv.parameters, (4,3))
+    # inv_trasnfo_test_mat = np.reshape(transfo_test.invert().parameters, (4,3))
+    # print(trasnfo_test_inv_mat-trasnfo_test_mat)
+    # print(trasnfo_test_inv_mat-inv_trasnfo_test_mat)
+    #print(trasnfo_test_inv_mat-np.linalg.inv(trasnfo_test_mat))
+    print(list_tranf_inv)
+
+    SUB_rec_by_Atlas_PATH = etape2(path_des_atlas_binary, list_atlas_finaux, tab_img_sujet, list_tranf_direc, list_tranf_inv, path_repertoire_sujet_rot, path_output_repertoire)
+    print(SUB_rec_by_Atlas_PATH)
+    np.save(os.path.join(path_variables, "SUB_rec_by_Atlas_PATH.npy"),SUB_rec_by_Atlas_PATH, allow_pickle='False')
     #etape2(list_atlas_finaux)

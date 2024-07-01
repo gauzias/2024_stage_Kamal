@@ -11,8 +11,32 @@ def recup_sujet(all_sujets_path, nom_general_sujet):
     pattern = re.compile(nom_general_sujet)
     file_paths = [os.path.join(root, s)
                   for root, _, files in os.walk(all_sujets_path)
-                  for s in files if pattern.match(s) and root != all_sujets_path]
+                  for s in files if pattern.match(s)]
     return sorted(file_paths)
+
+
+def separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet):
+    file_paths = recup_sujet(all_sujets_path, nom_general_sujet)
+    path_img_reel = []
+    path_img_segm = []
+    base_dir = os.path.normpath(all_sujets_path) #ces noermalisation servent à faire attention au slash pour être sur de se trouver à la bonne prfondeur (bon sous repertorie)
+    for path in file_paths:
+        chemin_normalized = os.path.normpath(path)
+        repertoire = os.path.dirname(chemin_normalized)
+        if os.path.commonpath([all_sujets_path, repertoire]) == base_dir and repertoire == base_dir:
+            path_img_segm.append(path)
+        else:
+            path_img_reel.append(path)
+    print(path_img_reel, path_img_segm)
+    return path_img_reel, path_img_segm
+
+
+# def chang_recup_nom_img_segm (old_name, all_sujets_path):
+#     path_img_reel, path_img_segm = separe_fichier_img_reel_img_segm(all_sujets_path, old_name)
+#     new_paths = [creation_chemin_nom_img(path_img, old_name, "Segmented") for path_img in path_img_segm]
+#     for new_path, old_path in zip(new_paths, path_img_segm):
+#          os.rename(old_path, new_path)
+#     return new_paths
 
 
 def copy_info_geo(img_recoit, img_give_copy):
@@ -45,12 +69,21 @@ def calcul_similarity_ants(img1, img2, critere):
     return ants.image_similarity(img1, img2, metric_type=critere)
 
 
-def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator, file_transfo_direct, file_transfo_inv):
-    warp_sub = ants.registration(atlas_fix, img_mouv, type_of_transform=type_transfo, outprefix =file_transfo_direct )
+def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator):
+    warp_sub = ants.registration(atlas_fix, img_mouv, type_of_transform=type_transfo)
+    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'], interpolator=interpolator)
 
-    inv_warp = ants.registration(img_mouv, atlas_fix, type_of_transform=type_transfo,outprefix =file_transfo_inv )
 
-    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'], interpolator=interpolator), inv_warp
+def SAVE_Transfo_rec_mat(atlas_fix, img_mouv, type_transfo, file_transfo_direct, file_transfo_inv, name_sujet, name_atlas):
+    path_file_transfo_direct = creation_chemin_fichier_mat(file_transfo_direct, name_sujet, name_atlas)
+    path_file_transfo_inv = creation_chemin_fichier_mat(file_transfo_inv, name_sujet, name_atlas)
+    if os.path.exists(path_file_transfo_direct):
+        print("ça existe déja")
+    ants.registration(atlas_fix, img_mouv, type_of_transform=type_transfo, outprefix=path_file_transfo_direct + '_direct_')
+    if os.path.exists(path_file_transfo_inv):
+        print("ça existe déja")
+    ants.registration(img_mouv, atlas_fix, type_of_transform=type_transfo, outprefix=path_file_transfo_inv + '_Inverse_')
+    return path_file_transfo_direct, path_file_transfo_inv
 
 
 def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
@@ -58,38 +91,38 @@ def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
     fichier = [os.path.basename(path) for path in tab_path]
     return repertoire, fichier
 
+
 def Enregistrer_img_ants_en_nifit(img, path_repertoire, nom_img):
     ants.image_write(img, os.path.join(path_repertoire, nom_img))
 
-def recupAtlas_to_tableau_simil(lignes_atlas,criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv):
+
+def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv):
     tab2D = pd.DataFrame(index=lignes_atlas, columns=criteres)
     print(sujet)
     sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)), reorient=True)
-    list_warp = []
     for atlas in lignes_atlas:
         Atlas_recherche = ants.image_read((os.path.join(path_atlas, atlas)), reorient=True)
-        Sujet_Warped, warp = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation,file_transfo_direct, file_transfo_inv)
-        list_warp.append(warp)
+        Sujet_Warped= Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
         for critere in criteres:
             similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
             tab2D.loc[atlas, critere] = similarity
-    bon_atlas, indice_bon_atlas = Atlas_du_bon_age(tab2D)
-    return tab2D, bon_atlas, list_warp[indice_bon_atlas]
+    bon_atlas = Atlas_du_bon_age(tab2D)
+    path_trf_direct, path_trf_inv = SAVE_Transfo_rec_mat(ants.image_read((os.path.join(path_atlas, bon_atlas)), reorient=True), sujet_ants, type_transfo, file_transfo_direct, file_transfo_inv, sujet, bon_atlas)
+    return tab2D, bon_atlas, path_trf_direct, path_trf_inv
+
 
 def Atlas_du_bon_age(tab_similarity):
     abs_tab = tab_similarity.abs()
     max = abs_tab['MattesMutualInformation'].idxmax()
-    indice = tab_similarity.index.get_loc(max)
-    return max, indice
+    return max
 
-# def recal_sujet_avc_bon_atlas_save(path_des_atlas, bon_atlas, path_sujet, sujet, nom_general_sujet_rot):
-#     Atlas_pour_sujet_ants = ants.image_read(os.path.join(path_des_atlas, bon_atlas))
-#     img_sub = ants.image_read(os.path.join(path_sujet, sujet))
-#     img_sub_recale = Recalage_atlas(Atlas_pour_sujet_ants, img_sub, "Rigid")
-#     path_img_rot_rec = creation_chemin_nom_img(path_sujet, img_sub_recale, nom_general_sujet_rot)
-#     Enregistrer_img_ants_en_nifit(img_sub_recale, path_sujet, path_img_rot_rec)
 
 def creation_chemin_nom_img(path_repertoire_output, img_name, suffix_nom_image: str):
     nom_initial, fin = (img_name[:-7], ".nii.gz") if img_name.endswith(".nii.gz") else os.path.splitext(img_name)
     return os.path.join(path_repertoire_output, f"{nom_initial}_{suffix_nom_image}")
 
+
+def creation_chemin_fichier_mat(path_repertoire_output,img_name, atlas_name):
+    nom_initial, fin = (img_name[:-7], ".gz") if img_name.endswith(".nii.gz") else os.path.splitext(img_name)
+    nom_2, fin2 = (atlas_name[:-7], ".gz") if atlas_name.endswith(".nii.gz") else os.path.splitext(atlas_name)
+    return os.path.join(path_repertoire_output, f"{nom_initial}_{nom_2}")

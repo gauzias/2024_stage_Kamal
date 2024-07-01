@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
-# from shared_module import SUB_rec_by_Atlas_PATH, list_path_threshold
 
 
-def etape3():
+
+def etape3(SUB_rec_by_Atlas_PATH, path_output):
     debut = time.time()
-    path_output = "/envau/work/meca/users/2024_Kamal/output/output_script3"
     list_repertoire, list_image_sub_recal = tls.path_abs_sujet_to_fichier_repertorie_sujet(SUB_rec_by_Atlas_PATH)
+    list_path_threshold = []
     for image_sub_recal, repertoire in zip(list_image_sub_recal, list_repertoire):
         Image_recal_array = nib.load(os.path.join(repertoire, image_sub_recal)).get_fdata()
         Image_recal_array[Image_recal_array == 2] = 10
@@ -28,9 +28,14 @@ def etape3():
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
     return list_path_threshold
-# if __name__ == "__main__":
-etape3()
 
+
+if __name__ == "__main__":
+    path_variables = "/home/achalhi.k/2024_stage_Kamal/variables"
+    path_output = "/envau/work/meca/users/2024_Kamal/output/output_script3"
+    SUB_rec_by_Atlas_PATH = np.load(os.path.join(path_variables,"SUB_rec_by_Atlas_PATH.npy"))
+    list_path_threshold = etape3(SUB_rec_by_Atlas_PATH, path_output)
+    np.save(os.path.join(path_variables, "list_path_threshold.npy"), list_path_threshold, allow_pickle='False')
 
 
 
