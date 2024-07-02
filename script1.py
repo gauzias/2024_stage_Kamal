@@ -30,6 +30,11 @@ def etape1(nom_general_sujet, all_sujets_path, path_ouput, Nom_caract, path_des_
         list_atlas_finaux.append(bon_atlas)
         list_tranf_direc.append(path_trf_direct)
         list_tranf_inv.append(path_trf_inv)
+        transfo = path_trf_inv+ "_Inverse_0GenericAffine.mat"
+        Atlas = ants.image_read(os.path.join(path_des_atlas,bon_atlas))
+        Sujet = ants.image_read(os.path.join(repertoire, sujet))
+        Img_suj_rec_to_atlas = ants.apply_transforms(Sujet, Atlas,  transformlist=transfo, interpolator= "nearestNeighbor")
+        nib.save(Img_suj_rec_to_atlas, (os.path.join(repertoire,bon_atlas)))
         print(f"l'atlas qui maximise l'information mutuel est : {bon_atlas} pour {sujet}\n")
     fin = time.time()
     tps_excecution = fin - debut
@@ -41,7 +46,7 @@ if __name__ == "__main__":
     file_transfo_direc = r'/envau/work/meca/users/2024_Kamal/output/output_script1'
     file_transfo_inv = r'/envau/work/meca/users/2024_Kamal/output/output_script2'
     path_variables = "/home/achalhi.k/2024_stage_Kamal/variables"
-    nom_general_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz'
+    nom_general_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_T2w.nii.gz'
     all_sujets_path = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor"
     path_ouput = "/envau/work/meca/users/2024_Kamal/output/output_script1"
     Nom_caract = r'^STA\d+\.nii.gz'

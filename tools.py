@@ -38,20 +38,18 @@ def separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet):
 #          os.rename(old_path, new_path)
 #     return new_paths
 
-
-def copy_info_geo(img_recoit, img_give_copy):
-    img_copy = nib.load(os.path.abspath(img_give_copy))
-    return nib.Nifti1Image(img_recoit, img_copy.affine, img_copy.header)
+def copy_info_geo(path_img_input,path_img_input_copied):
+    img_copied = nib.load(path_img_input_copied)
+    img_input = nib.load(path_img_input).get_fdata()
+    return nib.Nifti1Image(img_input, img_copied.affine, img_copied.header)
 
 
 def SWAP_COPY_INFO_SAVE(path_img_input, path_img_rot_nifti):
-    if os.path.exists(path_img_rot_nifti):
-        print("ça existe déja")
-    else :
-        img_input_array = nib.load(path_img_input).get_fdata()
-        img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1]
-        img_input_rot_nifti = copy_info_geo(img_input_array_rot, path_img_input)
-        nib.save(img_input_rot_nifti, path_img_rot_nifti)
+    img_input = nib.load(path_img_input)
+    img_input_array = img_input.get_fdata()
+    img_input_array_rot = np.transpose(img_input_array, (2, 1, 0))[::1, ::-1, ::1]
+    img_input_rot_nifti = nib.Nifti1Image(img_input_array_rot, img_input.affine, img_input.header)
+    nib.save(img_input_rot_nifti, path_img_rot_nifti)
 
 
 def creation_PATH_pour_fichier_swaper(path_sujet, repertoire_output):
