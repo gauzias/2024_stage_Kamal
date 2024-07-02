@@ -26,15 +26,15 @@ def etape1(nom_general_sujet, all_sujets_path, path_ouput, Nom_caract, path_des_
     list_tranf_direc = []
     list_tranf_inv = []
     for sujet, repertoire in zip(tab_img_sujet, tab_repertoire):
-        tab2D_global, Bon_atlas,path_trf_direct, path_trf_inv = tls.recupAtlas_to_tableau_simil(files_atlas, criteres, path_des_atlas, sujet, repertoire, 'Rigid', 'linear', file_transfo_direc, file_transfo_inv)
-        list_atlas_finaux.append(Bon_atlas)
+        bon_atlas, path_trf_direct, path_trf_inv = tls.recup_bon_atlas_avc_transfos(files_atlas, criteres, path_des_atlas, sujet, repertoire, "Rigid", "linear", file_transfo_direc, file_transfo_inv)
+        list_atlas_finaux.append(bon_atlas)
         list_tranf_direc.append(path_trf_direct)
         list_tranf_inv.append(path_trf_inv)
-        print(f"l'atlas qui maximise l'information mutuel est : {Bon_atlas} pour {sujet}\n")
+        print(f"l'atlas qui maximise l'information mutuel est : {bon_atlas} pour {sujet}\n")
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
-    return list_atlas_finaux, tab_img_sujet,list_tranf_direc,list_tranf_inv
+    return list_atlas_finaux, tab_img_sujet, list_tranf_direc, list_tranf_inv
 
 
 if __name__ == "__main__":

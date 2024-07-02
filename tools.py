@@ -96,25 +96,41 @@ def Enregistrer_img_ants_en_nifit(img, path_repertoire, nom_img):
     ants.image_write(img, os.path.join(path_repertoire, nom_img))
 
 
-def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv):
-    tab2D = pd.DataFrame(index=lignes_atlas, columns=criteres)
-    print(sujet)
-    sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)), reorient=True)
-    for atlas in lignes_atlas:
-        Atlas_recherche = ants.image_read((os.path.join(path_atlas, atlas)), reorient=True)
-        Sujet_Warped= Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
+def tab2d_atlas_sim_critere(lignes_atlas,criteres):
+    tab2D = np.zeros((len(lignes_atlas), 3), dtype=object)
+    tab2D[:, 0] = lignes_atlas
+    tab2D[:, 2] = np.array(criteres[0])
+    return tab2D
+
+
+def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
+    tab2D = tab2d_atlas_sim_critere(lignes_atlas,criteres)
+    sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)))
+    for i in range(len(tab2D[:, 0])):
+        Atlas_recherche = ants.image_read((os.path.join(path_atlas, tab2D[i, 0])))
+        Sujet_Warped = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
         for critere in criteres:
             similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
-            tab2D.loc[atlas, critere] = similarity
-    bon_atlas = Atlas_du_bon_age(tab2D)
-    path_trf_direct, path_trf_inv = SAVE_Transfo_rec_mat(ants.image_read((os.path.join(path_atlas, bon_atlas)), reorient=True), sujet_ants, type_transfo, file_transfo_direct, file_transfo_inv, sujet, bon_atlas)
-    return tab2D, bon_atlas, path_trf_direct, path_trf_inv
+            tab2D[i, 1] = similarity
+    print(tab2D)
+    return tab2D
 
+def atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
+    tab_similarity = recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation)
+    indice_val_max = np.argmax(np.abs(tab_similarity[:, 1].astype(float)))
+    nom_max = tab_similarity[indice_val_max, 0]
+    return nom_max
 
-def Atlas_du_bon_age(tab_similarity):
-    abs_tab = tab_similarity.abs()
-    max = abs_tab['MattesMutualInformation'].idxmax()
-    return max
+def recup_bon_atlas_avc_transfos(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv):
+    bon_atlas = atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation)
+    sujet_ants = ants.image_read((os.path.join(sujet_repertoire,sujet)))
+    atlas_ants = ants.image_read((os.path.join(path_atlas, bon_atlas)), reorient=True)
+    path_trf_direct, path_trf_inv = SAVE_Transfo_rec_mat(atlas_ants, sujet_ants, type_transfo, file_transfo_direct, file_transfo_inv, sujet, bon_atlas)
+    return bon_atlas, path_trf_direct, path_trf_inv
+# def Atlas_du_bon_age(tab_similarity):
+#     abs_tab = tab_similarity.abs()
+#     max = abs_tab['MattesMutualInformation'].idxmax()
+#     return max
 
 
 def creation_chemin_nom_img(path_repertoire_output, img_name, suffix_nom_image: str):
