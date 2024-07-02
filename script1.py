@@ -30,11 +30,11 @@ def etape1(nom_general_sujet, all_sujets_path, path_ouput, Nom_caract, path_des_
         list_atlas_finaux.append(bon_atlas)
         list_tranf_direc.append(path_trf_direct)
         list_tranf_inv.append(path_trf_inv)
-        transfo = path_trf_inv+ "_Inverse_0GenericAffine.mat"
-        Atlas = ants.image_read(os.path.join(path_des_atlas,bon_atlas))
-        Sujet = ants.image_read(os.path.join(repertoire, sujet))
-        Img_suj_rec_to_atlas = ants.apply_transforms(Sujet, Atlas,  transformlist=transfo, interpolator= "nearestNeighbor")
-        nib.save(Img_suj_rec_to_atlas, (os.path.join(repertoire,bon_atlas)))
+        # transfo = path_trf_inv+ "_Inverse_0GenericAffine.mat"   ###scripts2 fera recal par rapport à atlas binaire
+        # Atlas = ants.image_read(os.path.join(path_des_atlas,bon_atlas))
+        # Sujet = ants.image_read(os.path.join(repertoire, sujet))
+        # Img_suj_rec_to_atlas = ants.apply_transforms(Sujet, Atlas,  transformlist=transfo, interpolator= "nearestNeighbor")
+        # nib.save(Img_suj_rec_to_atlas, (os.path.join(repertoire,bon_atlas)))
         print(f"l'atlas qui maximise l'information mutuel est : {bon_atlas} pour {sujet}\n")
     fin = time.time()
     tps_excecution = fin - debut
