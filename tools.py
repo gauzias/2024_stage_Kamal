@@ -5,30 +5,42 @@ import numpy as np
 import pandas as pd
 import nibabel as nib
 import ants
+import fnmatch
 
 
-def recup_sujet(all_sujets_path, nom_general_sujet):
+def recup_les_sujets(nom_general_sujet, repertoire_sujet_segm = None, pattern_sous_repertoire_by_sujet = None):
+    file_paths = []
     pattern = re.compile(nom_general_sujet)
-    file_paths = [os.path.join(root, s)
-                  for root, _, files in os.walk(all_sujets_path)
-                  for s in files if pattern.match(s)]
+    if repertoire_sujet_segm :
+        for root, _, files in os.walk(repertoire_sujet_segm):
+            for file in files:
+                if pattern.match(file):
+                    file_paths.append(os.path.join(repertoire_sujet_segm ,file))
+    elif pattern_sous_repertoire_by_sujet:
+        base = "/"
+        path_pattern = re.compile(pattern_sous_repertoire_by_sujet)
+        for root, _, files in os.walk("/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/"):
+            if path_pattern.search(root):
+                for file in files :
+                    if pattern.match(file):
+                        file_paths.append(os.path.join(root,file))
     return sorted(file_paths)
 
 
-def separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet):
-    file_paths = recup_sujet(all_sujets_path, nom_general_sujet)
-    path_img_reel = []
-    path_img_segm = []
-    base_dir = os.path.normpath(all_sujets_path) #ces noermalisation servent à faire attention au slash pour être sur de se trouver à la bonne prfondeur (bon sous repertorie)
-    for path in file_paths:
-        chemin_normalized = os.path.normpath(path)
-        repertoire = os.path.dirname(chemin_normalized)
-        if os.path.commonpath([all_sujets_path, repertoire]) == base_dir and repertoire == base_dir:
-            path_img_segm.append(path)
-        else:
-            path_img_reel.append(path)
-    print(path_img_reel, path_img_segm)
-    return path_img_reel, path_img_segm
+# def separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet):
+#     file_paths = recup_sujet(all_sujets_path, nom_general_sujet)
+#     path_img_reel = []
+#     path_img_segm = []
+#     base_dir = os.path.normpath(all_sujets_path) #ces noermalisation servent à faire attention au slash pour être sur de se trouver à la bonne prfondeur (bon sous repertorie)
+#     for path in file_paths:
+#         chemin_normalized = os.path.normpath(path)
+#         repertoire = os.path.dirname(chemin_normalized)
+#         if os.path.commonpath([all_sujets_path, repertoire]) == base_dir and repertoire == base_dir:
+#             path_img_segm.append(path)
+#         else:
+#             path_img_reel.append(path)
+#     print(path_img_reel, path_img_segm)
+#     return path_img_reel, path_img_segm
 
 
 # def chang_recup_nom_img_segm (old_name, all_sujets_path):
@@ -64,7 +76,8 @@ def Parcours_dossier_only_data_match(Path, nom_caracteristic):
 
 
 def calcul_similarity_ants(img1, img2, critere):
-    return ants.image_similarity(img1, img2, metric_type=critere)
+    #masque_charged = ants.image_read(masques_sujet_path)
+    return ants.image_similarity(img1, img2, metric_type=critere, fixed_mask=None, moving_mask=None)
 
 
 def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator):
@@ -102,7 +115,7 @@ def tab2d_atlas_sim_critere(lignes_atlas,criteres):
 
 
 def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
-    tab2D = tab2d_atlas_sim_critere(lignes_atlas,criteres)
+    tab2D = tab2d_atlas_sim_critere(lignes_atlas, criteres)
     sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)))
     for i in range(len(tab2D[:, 0])):
         Atlas_recherche = ants.image_read((os.path.join(path_atlas, tab2D[i, 0])))

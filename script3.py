@@ -6,8 +6,8 @@ import pandas as pd
 import nibabel as nib
 import ants
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Qt5Agg')
+# import matplotlib
+# matplotlib.use('Qt5Agg')
 import tools as tls
 
 
@@ -31,7 +31,7 @@ def etape3(SUB_rec_by_Atlas_PATH, path_output):
 
 
 if __name__ == "__main__":
-    path_variables = "/home/achalhi.k/2024_stage_Kamal/variables"
+    path_variables = "/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/variables"
     path_output = "/envau/work/meca/users/2024_Kamal/output/output_script3"
     SUB_rec_by_Atlas_PATH = np.load(os.path.join(path_variables,"SUB_rec_by_Atlas_PATH.npy"))
     list_path_threshold = etape3(SUB_rec_by_Atlas_PATH, path_output)

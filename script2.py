@@ -6,12 +6,12 @@ import pandas as pd
 import nibabel as nib
 import ants
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Qt5Agg')
+# import matplotlib
+# matplotlib.use('Qt5Agg')
 import tools as tls
 
 
-def etape2(path_des_atlas_binary, list_atlas_finaux,tab_img_sujet,list_tranf_direc,list_tranf_inv,path_repertoire_sujet_rot,path_output_repertoire ):
+def etape2(path_des_atlas_binary, list_atlas_finaux,tab_img_sujet_rot,list_tranf_inv,path_repertoire_sujet_rot,path_output_repertoire ):
     debut = time.time()
     #On cherche à recaler l'atlas sur l'image (une inversion du recalage), nous utilisons cette fois l'atlas binar
     #NOM des ATLAS Binairs
@@ -24,7 +24,7 @@ def etape2(path_des_atlas_binary, list_atlas_finaux,tab_img_sujet,list_tranf_dir
         les_atlas_binary.append(f'STA{numero_atlas}_all_reg_LR_dilM{fin}')
 
     SUB_rec_by_Atlas_PATH = []
-    for sujet, atlas_binar, warp in zip(tab_img_sujet, les_atlas_binary, list_tranf_inv):
+    for sujet, atlas_binar, warp in zip(tab_img_sujet_rot, les_atlas_binary, list_tranf_inv):
         Sujet_fixe = ants.image_read(os.path.join(path_repertoire_sujet_rot, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_binary, atlas_binar))
         transfo =warp + "_Inverse_0GenericAffine.mat"
@@ -40,11 +40,11 @@ def etape2(path_des_atlas_binary, list_atlas_finaux,tab_img_sujet,list_tranf_dir
 
 if __name__ == "__main__":
     path_des_atlas_binary = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
-    path_variables = "/home/achalhi.k/2024_stage_Kamal/variables"
+    path_variables = "/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/variables"
     path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
     path_output_repertoire = "/envau/work/meca/users/2024_Kamal/output/output_script2"
     list_atlas_finaux = np.load(os.path.join(path_variables, "list_atlas_finaux.npy"))
-    tab_img_sujet = np.load(os.path.join(path_variables, "tab_img_sujet.npy"))
+    tab_img_sujet_rot = np.load(os.path.join(path_variables, "tab_img_sujet_rot.npy"))
     list_tranf_direc =  np.load(os.path.join(path_variables, "list_tranf_direc.npy"))
     list_tranf_inv = np.load(os.path.join(path_variables, "list_tranf_inv.npy"))
     # transfo_test = ants.read_transform(list_tranf_direc[0]+"0GenericAffine.mat")
@@ -57,7 +57,6 @@ if __name__ == "__main__":
     #print(trasnfo_test_inv_mat-np.linalg.inv(trasnfo_test_mat))
     print(list_tranf_inv)
 
-    SUB_rec_by_Atlas_PATH = etape2(path_des_atlas_binary, list_atlas_finaux, tab_img_sujet, list_tranf_direc, list_tranf_inv, path_repertoire_sujet_rot, path_output_repertoire)
+    SUB_rec_by_Atlas_PATH = etape2(path_des_atlas_binary, list_atlas_finaux, tab_img_sujet_rot, list_tranf_inv, path_repertoire_sujet_rot, path_output_repertoire)
     print(SUB_rec_by_Atlas_PATH)
-    np.save(os.path.join(path_variables, "SUB_rec_by_Atlas_PATH.npy"),SUB_rec_by_Atlas_PATH, allow_pickle='False')
-    #etape2(list_atlas_finaux)
+    np.save(os.path.join(path_variables, "SUB_rec_by_Atlas_PATH.npy"), SUB_rec_by_Atlas_PATH, allow_pickle='False')
