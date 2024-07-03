@@ -47,7 +47,7 @@ def copy_info_geo(path_img_input,path_img_input_copied):
 def SWAP_COPY_INFO_SAVE(path_img_input, path_img_rot_nifti):
     img_input = nib.load(path_img_input)
     img_input_array = img_input.get_fdata()
-    img_input_array_rot = np.transpose(img_input_array, (2, 1, 0))[::1, ::-1, ::1]
+    img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1]
     img_input_rot_nifti = nib.Nifti1Image(img_input_array_rot, img_input.affine, img_input.header)
     nib.save(img_input_rot_nifti, path_img_rot_nifti)
 
@@ -139,4 +139,19 @@ def creation_chemin_nom_img(path_repertoire_output, img_name, suffix_nom_image: 
 def creation_chemin_fichier_mat(path_repertoire_output,img_name, atlas_name):
     nom_initial, fin = (img_name[:-7], ".gz") if img_name.endswith(".nii.gz") else os.path.splitext(img_name)
     nom_2, fin2 = (atlas_name[:-7], ".gz") if atlas_name.endswith(".nii.gz") else os.path.splitext(atlas_name)
-    return os.path.join(path_repertoire_output, f"{nom_initial}_{nom_2}")
+    return os.path.join(path_repertoire_output, f"{nom_initial}_to_{nom_2}")
+
+# def determine_cas_template_or_self(nom_general_sujet_in_template, all_sujets_path):
+#     if os.path.exists(os.path.join( all_sujets_path, nom_general_sujet_in_template)):
+#         return 1
+#     else:                                                               #Sinon on charge la version dans l'espace propre du sujet
+#         return 2
+# def recup_sujet_template_and_self(case ,nom_general_sujet_in_template, nom_general_sujet_in_self_space, all_sujets_path):
+#     if case == 1 :
+#         tab_path_sujet, tab_sujet = recup_sujet(all_sujets_path, nom_general_sujet_in_template)   #Si on a une version de l'image dans le template, on la charge
+#         tab_path_sujet_self, tab_path_sujet_self_segm = separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet_in_self_space)
+#         return tab_path_sujet, tab_path_sujet_self, case
+# def recup_sujet_in_self(case, nom_general_sujet_in_template, nom_general_sujet_in_self_space, all_sujets_path):
+#     if case == 2 :
+#         tab_path_sujet, tab_path_sujet_segm = separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet_in_self_space)
+#         return tab_path_sujet, case

@@ -8,102 +8,8 @@ import ants
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
+import tools as tls
 
-def recup_sujet(all_sujets_path, nom_general_sujet):
-    pattern = re.compile(nom_general_sujet)
-    file_paths = [os.path.join(root, s)
-                  for root, _, files in os.walk(all_sujets_path)
-                  for s in files if pattern.match(s) and root != all_sujets_path]
-    return sorted(file_paths)
-
-def copy_info_geo(img_recoit, img_give_copy):
-    img_copy = nib.load(os.path.abspath(img_give_copy))
-    return nib.Nifti1Image(img_recoit, img_copy.affine, img_copy.header)
-
-def SWAP_COPY_INFO_SAVE(path_img_input, path_img_rot_nifti):
-    img_input_array = nib.load(path_img_input).get_fdata()
-    img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1]
-    img_input_rot_nifti = copy_info_geo(img_input_array_rot, path_img_input)
-    nib.save(img_input_rot_nifti, path_img_rot_nifti)
-
-def creation_PATH_pour_fichier_swaper(list_path_sujet):
-    list_path_sujet_rot = []
-    for path_in in list_path_sujet:
-        repertoire = os.path.dirname(path_in)
-        fichier = os.path.basename(path_in)
-        nom_initial, fin = (fichier[:-7], ".nii.gz") if fichier.endswith(".nii.gz") else os.path.splitext(fichier)
-        list_path_sujet_rot.append(os.path.join(repertoire, f"{nom_initial}_rot{fin}"))
-    return list_path_sujet_rot
-
-def swap_each_SUB(path_list_sujet, list_path_sujet_rot):
-    for path_sujet, path_sujet_rot in zip(path_list_sujet, list_path_sujet_rot):
-        SWAP_COPY_INFO_SAVE(path_sujet, path_sujet_rot)
-
-def Parcours_dossier_only_data_match(Path, nom_caracteristic):
-    pattern = re.compile(nom_caracteristic)
-    return sorted(f for f in os.listdir(Path) if pattern.match(f))
-
-def tabs_1D_to_tab2D(donnee_ligne, donnee_colonne):
-    return pd.DataFrame(index=donnee_ligne, columns=donnee_colonne)
-
-def calcul_similarity_ants(img1, img2, critere):
-    return ants.image_similarity(img1, img2, metric_type=critere)
-
-def Recalage_atlas(atlas_fix, img_mouv, type_transfo, masque):
-    warp_sub = ants.registration(atlas_fix, img_mouv, type_transfo)
-    return ants.apply_transforms(atlas_fix, img_mouv, transformlist=warp_sub['fwdtransforms'][0],interpolator = 'nearestNeighbor', mask = masque )
-def Inv_Recalage_atlas(atlas, img_mouv,type_transfo) :
-    warp_sub = ants.registration(img_mouv, atlas,   type_transfo)
-    return ants.apply_transforms(img_mouv, atlas,   transformlist=warp_sub['fwdtransforms'], interpolator = 'nearestNeighbor')
-
-def recup_atlas_sujet(path_repertoire, fichier):
-    return ants.image_read(os.path.join(path_repertoire, fichier))
-
-def path_abs_sujet_to_fichier_repertorie_sujet(tab_path):
-    repertoire = [os.path.dirname(path) for path in tab_path]
-    fichier = [os.path.basename(path) for path in tab_path]
-    return repertoire, fichier
-
-def Enregistrer_img_ants_en_nifit(img, path_repertoire, nom_img):
-    ants.image_write(img, os.path.join(path_repertoire, nom_img))
-
-def recupAtlas_to_tableau_simil(tab2D, ligne, colonne, path_atlas, sujet, sujet_repertoire, type_transfo):
-    sujet_ants = recup_atlas_sujet(sujet_repertoire, sujet)
-    for atlas in ligne:
-        Atlas_recherche = recup_atlas_sujet(path_atlas, atlas)
-        Sujet_Warped = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo)
-        for critere in colonne:
-            similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
-            tab2D.loc[atlas, critere] = similarity
-    return tab2D
-
-def Atlas_du_bon_age(tab_similarity):
-    abs_tab = tab_similarity.abs()
-    return abs_tab['MattesMutualInformation'].idxmax(), abs_tab['Correlation'].idxmax()
-
-def retourne_bon_atlas(liste_atlas_pretendant):
-    atlas1, atlas2 = liste_atlas_pretendant
-    if atlas1 == atlas2:
-        return atlas1
-    print("aucun atlas ne réunit 2 critères")
-    return atlas1
-
-def recal_sujet_avc_bon_atlas_save(path_des_atlas, bon_atlas, path_sujet, sujet, nom_general_sujet_rot):
-    Atlas_pour_sujet_ants = ants.image_read(os.path.join(path_des_atlas, bon_atlas))
-    img_sub = ants.image_read(os.path.join(path_sujet, sujet))
-    img_sub_recale = Recalage_atlas(Atlas_pour_sujet_ants, img_sub, "Rigid")
-    path_img_rot_rec = creation_chemin_nom_img_rot_rec(path_sujet, nom_general_sujet_rot)
-    Enregistrer_img_ants_en_nifit(img_sub_recale, path_sujet, path_img_rot_rec)
-
-def creation_chemin_nom_img_rot_rec(path_repertoire, img_rot_name, nom_atlas_segm : str):
-
-    nom_initial, fin = (img_rot_name[:-7], ".nii.gz") if img_rot_name.endswith(".nii.gz") else os.path.splitext(img_rot_name)
-    return os.path.join(path_repertoire, f"{nom_initial}_{nom_atlas_segm}")
-
-def creation_chemin_nom_img_threshold(path_repertoire, img, nom_atlas_threshold : str):
-
-    nom_initial, fin = (img[:-7], ".nii.gz") if img.endswith(".nii.gz") else os.path.splitext(img)
-    return os.path.join(path_repertoire, f"{nom_initial}_{nom_atlas_threshold}{fin}")
 if __name__ == "__main__":
     debut = time.time()
 
@@ -113,14 +19,14 @@ if __name__ == "__main__":
     Nom_caract = r'^STA\d+\.nii.gz'
     path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
 
-    files_atlas = Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
-    tab_path_sujet = recup_sujet(all_sujets_path, nom_general_sujet)
+    files_atlas = tls.Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
+    tab_path_sujet = tls.recup_sujet(all_sujets_path, nom_general_sujet)
     #list_path_sujet_rot = creation_PATH_pour_fichier_swaper(tab_path_sujet)
     #swap_each_SUB(tab_path_sujet, list_path_sujet_rot)
 
-    tab_path_sujet_rot = recup_sujet(all_sujets_path, nom_general_sujet_rot)
+    tab_path_sujet_rot = tls.recup_sujet(all_sujets_path, nom_general_sujet_rot)
     print(tab_path_sujet_rot)
-    tab_repertoire, tab_img_sujet = path_abs_sujet_to_fichier_repertorie_sujet(tab_path_sujet_rot)
+    tab_repertoire, tab_img_sujet = tls.path_abs_sujet_to_fichier_repertorie_sujet(tab_path_sujet_rot)
     # criteres = ['MattesMutualInformation','Correlation']
     # tableau_criteres_by_atlas = tabs_1D_to_tab2D(files_atlas, criteres)
     #
@@ -150,6 +56,7 @@ if __name__ == "__main__":
     path_des_atlas_binary = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
     les_atlas_binary = []
     SUB_rec_by_Atlas_PATH = []
+
     for atlas in List_atlas_finaux :
         nom, fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
         numero_atlas = nom.split('STA')[1]
@@ -158,22 +65,22 @@ if __name__ == "__main__":
     for sujet, repertoire, atlas in zip(tab_img_sujet, tab_repertoire, les_atlas_binary):
         Sujet_fixe = ants.image_read(os.path.join(repertoire, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_binary, atlas))
-        SUB_recal_atlas_segm = Inv_Recalage_atlas(Atlas_binary,Sujet_fixe,  "Rigid")
-        path_sub_recale_by_atlas_binary = creation_chemin_nom_img_rot_rec(repertoire, sujet, atlas)
+        SUB_recal_atlas_segm = tls.Inv_Recalage_atlas(Atlas_binary,Sujet_fixe,  "SyN", None)
+        path_sub_recale_by_atlas_binary = tls.creation_chemin_nom_img_rot_rec(repertoire, sujet, atlas)
         SUB_rec_by_Atlas_PATH.append(path_sub_recale_by_atlas_binary)
-        Enregistrer_img_ants_en_nifit(SUB_recal_atlas_segm, os.path.join(repertoire, sujet), path_sub_recale_by_atlas_binary)
+        tls.Enregistrer_img_ants_en_nifit(SUB_recal_atlas_segm, os.path.join(repertoire, sujet), path_sub_recale_by_atlas_binary)
 
 
-        #Seuillage par hemisphère et importer image segmenter
+        #Seuillage par hemisphère
 
-    list_repertoire, list_image_sub_recal =path_abs_sujet_to_fichier_repertorie_sujet(SUB_rec_by_Atlas_PATH)
+    list_repertoire, list_image_sub_recal =tls.path_abs_sujet_to_fichier_repertorie_sujet(SUB_rec_by_Atlas_PATH)
 
     list_path_threshold = []
     for image_sub_recal, repertoire in zip(list_image_sub_recal, list_repertoire):
         Image_recal_array = nib.load(os.path.join(repertoire, image_sub_recal)).get_fdata()
         Image_recal_array[Image_recal_array == 2] = 10
         Image_recal_array[Image_recal_array != 10] = 0
-        path_image_threshold = creation_chemin_nom_img_threshold(repertoire, image_sub_recal, "seg_L_only_x10")
+        path_image_threshold = tls.creation_chemin_nom_img_threshold(repertoire, image_sub_recal, "seg_L_only_x10")
         list_path_threshold.append(path_image_threshold)
         Image_recal_threshold = nib.Nifti1Image(Image_recal_array, affine=np.eye(4))
         nib.save(Image_recal_threshold, path_image_threshold)
@@ -181,32 +88,32 @@ if __name__ == "__main__":
 
     #Recuperation des images segmentés :
 
-    repertoire_sujet_seg = r'/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor'
-    nom_mask_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-brainmask_T2w.nii.gz'
-    pattern = re.compile(nom_general_sujet)
-    path_sujet_segment= [os.path.join(root, s)
-                  for root, _, files in os.walk(all_sujets_path)
-                  for s in files if pattern.match(s) and root == all_sujets_path]
-    pattern_mask = re.compile(nom_mask_sujet)
-    list_path_sujet_mask= [os.path.join(root, s)
-                  for root, _, files in os.walk(all_sujets_path)
-                  for s in files if pattern_mask.match(s)]
-    list_path_img_segmente_rot = creation_PATH_pour_fichier_swaper(path_sujet_segment)
-    swap_each_SUB(path_sujet_segment, list_path_img_segmente_rot)
-    list_repertoire_segm_bin, list_image_sub_segm_bin =path_abs_sujet_to_fichier_repertorie_sujet(list_path_img_segmente_rot )
-
-    for path_sujet_segm_rot, path_image_sub_binaryse, sujet, repertoire, mask_path in zip(list_path_img_segmente_rot, list_path_threshold,list_image_sub_segm_bin, list_repertoire_segm_bin,list_path_sujet_mask):
-        Masque_sujet = ants.image_read(mask_path)
-        Img_sujet_segmente = ants.image_read(path_sujet_segm_rot)
-        Img_sujet_binarise = ants.image_read(path_image_sub_binaryse)
-        Img_sujet_binarise_recal = Recalage_atlas(Img_sujet_segmente, Img_sujet_binarise,"Rigid",Masque_sujet)
-        Img_sujet_segmente_array = Img_sujet_segmente.numpy()
-        Img_sujet_segm_binar_combined_array = Img_sujet_segmente_array.copy()
-        Img_sujet_binarise_recal_array = Img_sujet_binarise_recal.numpy()
-        Img_sujet_segm_binar_combined_array = Img_sujet_segmente_array + Img_sujet_binarise_recal_array
-        Img_sujet_segm_binar_combined = ants.from_numpy(Img_sujet_segm_binar_combined_array, origin=Img_sujet_segmente.origin, spacing=Img_sujet_segmente.spacing, direction=Img_sujet_segmente.direction)
-        path_img_final = creation_chemin_nom_img_threshold(repertoire, sujet, "segmentation_LR")
-        ants.image_write(Img_sujet_segm_binar_combined, path_img_final)
+    # repertoire_sujet_seg = r'/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor'
+    # nom_mask_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-brainmask_T2w.nii.gz'
+    # pattern = re.compile(nom_general_sujet)
+    # path_sujet_segment= [os.path.join(root, s)
+    #               for root, _, files in os.walk(all_sujets_path)
+    #               for s in files if pattern.match(s) and root == all_sujets_path]
+    # pattern_mask = re.compile(nom_mask_sujet)
+    # list_path_sujet_mask= [os.path.join(root, s)
+    #               for root, _, files in os.walk(all_sujets_path)
+    #               for s in files if pattern_mask.match(s)]
+    # list_path_img_segmente_rot = creation_PATH_pour_fichier_swaper(path_sujet_segment)
+    # swap_each_SUB(path_sujet_segment, list_path_img_segmente_rot)
+    # list_repertoire_segm_bin, list_image_sub_segm_bin =path_abs_sujet_to_fichier_repertorie_sujet(list_path_img_segmente_rot )
+    #
+    # for path_sujet_segm_rot, path_image_sub_binaryse, sujet, repertoire, mask_path in zip(list_path_img_segmente_rot, list_path_threshold,list_image_sub_segm_bin, list_repertoire_segm_bin,list_path_sujet_mask):
+    #     Masque_sujet = ants.image_read(mask_path)
+    #     Img_sujet_segmente = ants.image_read(path_sujet_segm_rot)
+    #     Img_sujet_binarise = ants.image_read(path_image_sub_binaryse)
+    #     Img_sujet_binarise_recal = Recalage_atlas(Img_sujet_segmente, Img_sujet_binarise,"Rigid", Masque_sujet)
+    #     Img_sujet_segmente_array = Img_sujet_segmente.numpy()
+    #     Img_sujet_segm_binar_combined_array = Img_sujet_segmente_array.copy()
+    #     Img_sujet_binarise_recal_array = Img_sujet_binarise_recal.numpy()
+    #     Img_sujet_segm_binar_combined_array = Img_sujet_segmente_array*Img_sujet_binarise_recal_array
+    #     Img_sujet_segm_binar_combined = ants.from_numpy(Img_sujet_segm_binar_combined_array, origin=Img_sujet_segmente.origin, spacing=Img_sujet_segmente.spacing, direction=Img_sujet_segmente.direction)
+    #     path_img_final = creation_chemin_nom_img_threshold(repertoire, sujet, "segmentation_LR")
+    #     ants.image_write(Img_sujet_segm_binar_combined, path_img_final)
 
 
 

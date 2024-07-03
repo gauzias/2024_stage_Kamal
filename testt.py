@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 import tools as tls
+
+
 path_atlas = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2'
 path = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/STA25_all_reg_LR_dilM.nii.gz'
 sujet_repertoire = r'/envau/work/meca/users/2024_Kamal/output/output_script1/'
@@ -21,7 +23,6 @@ path_sujet = r'/envau/work/meca/users/2024_Kamal/output/output_script1/sub-0001_
 sujet = ants.image_read(path_sujet)
 sujet_segm = ants.image_read(sujet_segm)
 tab2D_global, Bon_atlas, warp = tls.recupAtlas_to_tableau_simil(ligne_atlas, criteres, path_atlas, 'sub-0001_ses-0001_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz' , '/envau/work/meca/users/2024_Kamal/output/output_script1/', 'Rigid', 'linear')
-warp =
 Atlas_binary_warped = ants.apply_transforms(sujet, atlas_binaire,   transformlist=warp['invtransforms'], interpolator='nearestNeighbor')
 print(Atlas_binary_warped.spacing,atlas_binaire.spacing )
 similarity_inv = ants.image_mutual_information(Atlas_binary_warped, atlas_binaire)
