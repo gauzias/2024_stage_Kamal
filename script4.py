@@ -16,18 +16,15 @@ def etape4(nom_general_sujet, all_sujets_path,path_output, tab_img_sujet, list_p
     debut = time.time()
     #Recuperation des images segmentés et on les swap :
     list_path_img_segmente = tls.recup_les_sujets(nom_general_sujet, repertoire_sujet_segm = all_sujets_path)
-    print(list_path_img_segmente)
     list_path_img_segmente_rot = [tls.creation_PATH_pour_fichier_swaper(sujet_path, path_output) for sujet_path in list_path_img_segmente]
     for path_sujet_rot, path_sujet in zip(list_path_img_segmente_rot, list_path_img_segmente):
         tls.SWAP_COPY_INFO_SAVE(path_sujet, path_sujet_rot)
     # ON additionne apres passage en numpy array les tableau de l'image segmenté du sujet l'image de l'hemisphère droit*10
     for path_sujet_segm_rot, path_image_sub_binaryse, sujet in zip(list_path_img_segmente_rot, list_path_threshold, tab_img_sujet):
-        img_sujet_segmente = ants.image_read(path_sujet_segm_rot)
-        img_sujet_binarise = ants.image_read(path_image_sub_binaryse)
-        img_sujet_segmente_array = img_sujet_segmente.numpy()
-        img_sujet_binarise_recal_array = img_sujet_binarise.numpy()
+        img_sujet_segmente_array = nib.load(path_sujet_segm_rot).get_fdata()
+        img_sujet_binarise_recal_array =nib.load(path_image_sub_binaryse).get_fdata()
         img_sujet_segm_binar_combined_array = img_sujet_segmente_array + img_sujet_binarise_recal_array
-        image_segm_final = nib.Nifti1Image(img_sujet_segm_binar_combined_array, affine=np.eye(4))
+        image_segm_final = nib.Nifti1Image(img_sujet_segm_binar_combined_array, nib.load(path_sujet_segm_rot).affine, nib.load(path_sujet_segm_rot).header)
         path_img_final = tls.creation_chemin_nom_img(path_output, sujet, "segmentation_LR.nii.gz")
         nib.save(image_segm_final, path_img_final)
     fin = time.time()

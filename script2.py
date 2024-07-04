@@ -23,15 +23,25 @@ def etape2(path_des_atlas_binary, list_atlas_finaux,tab_img_sujet_rot,list_tranf
         print(numero_atlas)
         les_atlas_binary.append(f'STA{numero_atlas}_all_reg_LR_dilM{fin}')
 
+    # for sujet, atlas_binar in zip(tab_img_sujet_rot, les_atlas_binary):
+    #     print(atlas_binar )
+    #     atlas_binary_redim = tls.copy_info_geo(os.path.join(path_des_atlas_binary, atlas_binar), os.path.join(path_repertoire_sujet_rot, sujet))
+    #     print(f"les dimension de Atlas_binary est : {np.shape(atlas_binary_redim )}")
+    #     path_atlas_binary_redim = os.path.join(path_output_repertoire, atlas_binar)
+    #     nib.save(atlas_binary_redim, path_atlas_binary_redim)
+
     SUB_rec_by_Atlas_PATH = []
     for sujet, atlas_binar, warp in zip(tab_img_sujet_rot, les_atlas_binary, list_tranf_inv):
         Sujet_fixe = ants.image_read(os.path.join(path_repertoire_sujet_rot, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_binary, atlas_binar))
+        print(f"les dimension de Sujet_fixe est : {np.shape(Sujet_fixe)}")
+        print(f"les dimension de Atlas_binary est : {np.shape(Atlas_binary )}")
         transfo =warp + "_Inverse_0GenericAffine.mat"
-        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=transfo, interpolator= "nearestNeighbor")
+        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary, transformlist=transfo, interpolator="nearestNeighbor")
+        print(f"les dimension de Atlas_binary_warped est : {np.shape(Atlas_binary_warped)}")
         path_atlas_binary_warped = tls.creation_chemin_nom_img(path_output_repertoire, sujet, atlas_binar)
         SUB_rec_by_Atlas_PATH.append(path_atlas_binary_warped)
-        ants.image_write(Atlas_binary_warped, path_atlas_binary_warped)
+        nib.save(Atlas_binary_warped, path_atlas_binary_warped)
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")

@@ -235,3 +235,49 @@ if __name__ == "__main__":
     # plt.show()
     # path_fct_rigid_recalage = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2/STA34_ROT_RECpy.nii.gz"
     # nib.save(Warped_atlas,path_fct_rigid_recalage)
+
+    # def separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet):
+#     file_paths = recup_sujet(all_sujets_path, nom_general_sujet)
+#     path_img_reel = []
+#     path_img_segm = []
+#     base_dir = os.path.normpath(all_sujets_path) #ces noermalisation servent à faire attention au slash pour être sur de se trouver à la bonne prfondeur (bon sous repertorie)
+#     for path in file_paths:
+#         chemin_normalized = os.path.normpath(path)
+#         repertoire = os.path.dirname(chemin_normalized)
+#         if os.path.commonpath([all_sujets_path, repertoire]) == base_dir and repertoire == base_dir:
+#             path_img_segm.append(path)
+#         else:
+#             path_img_reel.append(path)
+#     print(path_img_reel, path_img_segm)
+#     return path_img_reel, path_img_segm
+
+# def chang_recup_nom_img_segm (old_name, all_sujets_path):
+#     path_img_reel, path_img_segm = separe_fichier_img_reel_img_segm(all_sujets_path, old_name)
+#     new_paths = [creation_chemin_nom_img(path_img, old_name, "Segmented") for path_img in path_img_segm]
+#     for new_path, old_path in zip(new_paths, path_img_segm):
+#          os.rename(old_path, new_path)
+#     return new_paths
+
+#max pour data frame panda :
+# def Atlas_du_bon_age(tab_similarity):
+#     abs_tab = tab_similarity.abs()
+#     max = abs_tab['MattesMutualInformation'].idxmax()
+#     return max
+
+
+
+
+# def determine_cas_template_or_self(nom_general_sujet_in_template, all_sujets_path):
+#     if os.path.exists(os.path.join( all_sujets_path, nom_general_sujet_in_template)):
+#         return 1
+#     else:                                                               #Sinon on charge la version dans l'espace propre du sujet
+#         return 2
+# def recup_sujet_template_and_self(case ,nom_general_sujet_in_template, nom_general_sujet_in_self_space, all_sujets_path):
+#     if case == 1 :
+#         tab_path_sujet, tab_sujet = recup_sujet(all_sujets_path, nom_general_sujet_in_template)   #Si on a une version de l'image dans le template, on la charge
+#         tab_path_sujet_self, tab_path_sujet_self_segm = separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet_in_self_space)
+#         return tab_path_sujet, tab_path_sujet_self, case
+# def recup_sujet_in_self(case, nom_general_sujet_in_template, nom_general_sujet_in_self_space, all_sujets_path):
+#     if case == 2 :
+#         tab_path_sujet, tab_path_sujet_segm = separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet_in_self_space)
+#         return tab_path_sujet, case
