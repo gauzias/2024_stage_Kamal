@@ -36,7 +36,9 @@ def copy_info_geo(path_img_input, path_img_input_copied):
 def SWAP_COPY_INFO_SAVE(path_img_input, path_img_rot_nifti):
     img_input = nib.load(path_img_input)
     img_input_array = img_input.get_fdata()
+    original_data_type = img_input.get_data_dtype()
     img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1]
+    img_input_array_rot = img_input_array_rot.astype(original_data_type)
     img_input_rot_nifti = nib.Nifti1Image(img_input_array_rot, img_input.affine, img_input.header)
     nib.save(img_input_rot_nifti, path_img_rot_nifti)
 
@@ -53,9 +55,8 @@ def Parcours_dossier_only_data_match(Path, nom_caracteristic):
     return sorted(f for f in os.listdir(Path) if pattern.match(f))
 
 
-def calcul_similarity_ants(img1, img2, critere):
-    #masque_charged = ants.image_read(masques_sujet_path)
-    return ants.image_similarity(img1, img2, metric_type=critere, fixed_mask=None, moving_mask=None)
+def calcul_similarity_ants(img1, img2, critere, path_mask = None):
+    return ants.image_similarity(img1, img2, metric_type=critere, fixed_mask=None, moving_mask=path_mask)
 
 
 def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator):
@@ -92,27 +93,27 @@ def tab2d_atlas_sim_critere(lignes_atlas,criteres):
     return tab2D
 
 
-def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
+def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask = None):
     tab2D = tab2d_atlas_sim_critere(lignes_atlas, criteres)
     sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)))
     for i in range(len(tab2D[:, 0])):
         Atlas_recherche = ants.image_read((os.path.join(path_atlas, tab2D[i, 0])))
         Sujet_Warped = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
         for critere in criteres:
-            similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere)
+            similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere, mask = None)
             tab2D[i, 1] = similarity
     print(tab2D)
     return tab2D
 
-def atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation):
-    tab_similarity = recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation)
+def atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask = None):
+    tab_similarity = recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask = None)
     indice_val_max = np.argmax(np.abs(tab_similarity[:, 1].astype(float)))
     nom_max = tab_similarity[indice_val_max, 0]
     return nom_max
 
-def recup_bon_atlas_avc_transfos(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv):
-    bon_atlas = atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation)
-    sujet_ants = ants.image_read((os.path.join(sujet_repertoire,sujet)))
+def recup_bon_atlas_avc_transfos(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv, mask = None):
+    bon_atlas = atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation,mask = None)
+    sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)))
     atlas_ants = ants.image_read((os.path.join(path_atlas, bon_atlas)), reorient=True)
     path_trf_direct, path_trf_inv = SAVE_Transfo_rec_mat(atlas_ants, sujet_ants, type_transfo, file_transfo_direct, file_transfo_inv, sujet, bon_atlas)
     return bon_atlas, path_trf_direct, path_trf_inv

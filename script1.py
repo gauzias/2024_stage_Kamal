@@ -9,12 +9,10 @@ import matplotlib.pyplot as plt
 import tools as tls
 
 
-def etape1(nom_general_sujet, all_sujets_path, path_pattern, path_ouput, Nom_caract, path_des_atlas, file_transfo_direc, file_transfo_inv):
+def etape1( nom_general_sujet, all_sujets_path, path_pattern, path_ouput, Nom_caract, path_des_atlas, file_transfo_direc, file_transfo_inv, chemin_vers_mask = None):
     debut = time.time()
     files_atlas = tls.Parcours_dossier_only_data_match(path_des_atlas, Nom_caract)
-    # path_files_sujet_masque = tls.recup_les_sujetx(all_sujets_path, nom_general_mask_sujet)
-    # print(path_files_sujet_masque)
-    tab_path_sujet = tls.recup_les_sujets(nom_general_sujet,pattern_sous_repertoire_by_sujet = path_pattern)
+    tab_path_sujet = tls.recup_les_sujets(nom_general_sujet, pattern_sous_repertoire_by_sujet=path_pattern)
     print(tab_path_sujet)
     list_path_sujet_rot = [tls.creation_PATH_pour_fichier_swaper(sujet_path, path_ouput) for sujet_path in tab_path_sujet]
     for path_sujet_rot, path_sujet in zip(list_path_sujet_rot, tab_path_sujet):
@@ -37,17 +35,18 @@ def etape1(nom_general_sujet, all_sujets_path, path_pattern, path_ouput, Nom_car
 
 
 if __name__ == "__main__":
-    #nom_general_mask_sujet =
     file_transfo_direc = r'/envau/work/meca/users/2024_Kamal/output/output_script1'
     file_transfo_inv = r'/envau/work/meca/users/2024_Kamal/output/output_script2'
     path_variables = "/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/variables"
     nom_general_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz'
     path_pattern = r'/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-00\d+\/ses-00\d+\/haste/default_reconst'
     all_sujets_path = "/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor"
-    path_ouput = "/envau/work/meca/users/2024_Kamal/output/output_script1"
+    path_output = "/envau/work/meca/users/2024_Kamal/output/output_script1"
     Nom_caract = r'^STA\d+\.nii.gz'
     path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
-    list_atlas_finaux, tab_img_sujet_rot, list_tranf_direc, list_tranf_inv = etape1(nom_general_sujet, all_sujets_path,path_pattern, path_ouput, Nom_caract,path_des_atlas, file_transfo_direc, file_transfo_inv)
+    path_output_avec_mask = "/envau/work/meca/users/2024_Kamal/output/Output_script1_avec_mask"
+    chemin_vers_mask = np.load(os.path.join(path_variables,"chemin_vers_mask.npy"))
+    list_atlas_finaux, tab_img_sujet_rot, list_tranf_direc, list_tranf_inv = etape1(nom_general_sujet, all_sujets_path,path_pattern, path_output, Nom_caract,path_des_atlas, file_transfo_direc, file_transfo_inv)
 
     print(list_atlas_finaux, tab_img_sujet_rot, list_tranf_inv)
     np.save(os.path.join(path_variables, "list_atlas_finaux.npy"), list_atlas_finaux, allow_pickle='False')
