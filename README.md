@@ -5,8 +5,11 @@
 
 ### installer un environnement virtuel
 module load all anaconda
+
 conda create --name stage_Kamal python=3.8
+
 conda activate stage_Kamal
+
 pip install antspyx
 
 ## organisation du repos
