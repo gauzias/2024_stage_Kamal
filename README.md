@@ -25,10 +25,12 @@ script1 :
 
 ce script permet de recuperer les images de nos sujets à partir d'un nom pattern (dont les numeros varient) qu'on lui donne en entrée,
 d'un chemin pattern (dont le numéro varie selon le sujet). 
-Je crée des chemins pour les images des sujets après transposition/basculement ("swap"). 
+
+Je crée des chemins pour les images des sujets après transposition/basculement ("swap").
+
 Je "swap" et copies les informations géométriques de chacune de mes images sujets recupérés.
-Pour chacun de mes sujets, j'utilise la "fonction recalage par les atlas" de mon tools, 
-et je recupère en sortir dans des listes, l'atlas du bon âge, le path de chaque transformation inverse de recalage.
+
+Pour chacun de mes sujets, j'utilise la "fonction recalage par les atlas" de mon tools, et je recupère en sortir dans des listes, l'atlas du bon âge, le path de chaque transformation inverse de recalage.
 
 script2 :
 Ce script charge les sorties du 1er script, il récupère les atlas binarisés correspondant aux atlas déterminés prcédemment. 
@@ -46,34 +48,58 @@ un swaping est réalisés sur les sujets segmentés avant d'aditionner chaques i
 
 #### Le dossier variables contient des listes de chemins de fichiers sauvés, notamment : 
 Ceux des sujets anatomiques que l'on a transposés et inversés selon certains axes (swaping).
+
 Ceux des atlas d'âge adaptés pour chaque sujets mis en entrée dans le script1.
+
 Ceux des transformations direct et inverse obtenue dans le scripts1 entre chaque sujet vers son atlas d'âge adaptés.
+
 Ceux des atlas binarisés projetés vers l'espace sujet par le script2 en utilisant les transformations inverse récupérées.
+
 Ceux des hemisphères gauches obtenues dans l'espace sujet.(Script3)
 
 
 ## tutoriel
 Pour appliquer le pipeline à une image, suivre la procédure suivante:
 Il faut preparer pour le script1 les diffèrents chemins nécessaires pour la récupérations des données. 
-  On lui donne donc : Path du repertoire contenant les atlas.
-                      Path du repertoire contenant les images sujets.
-                      Pattern du nom des images sujets.
-                      Pattern du nom des Atlas.
-                      Path de sortie pour les données retournées.
-                      Path de sortie pour stockages des variables réutilisées dans les prochains scripts.
-  Une fois le script1 excecuté, pour initialiser le script2, il faut donner:
-                      Path des variables (pour récupérer les données retournées par le script1).
-                      Path output du script1 qui contient les images de sujet "swapé".
-                      Path du repertoire contenant les Atlas binarisés.
-                      Path de sortie pour stocker les images après le traitement par recalage inverse.
-                      nom des fichiers contenant les diffèrentes variables.
-  Le script3 nécessite :
-                      Path des variables et nom du fichiers des atlas recalés enregistrés dans le script2.
-                      Path de sortie pour enregistrer les masques d'hémisphères gauches.
-  Enfin, le script4 attend qu"on lui donne : 
-                      Path des variables et nom des fichiers contenants la listes des paths des masques des hemisphères gauches,
-                                                        et de celui contenant la listes des sujets.
-                      Path du répertoire des images segmentés des sujets.
-                      Pattern du nom d'une image segmentées.
-                      Path de sortie des images après ce dernier traitement.
+On lui donne donc :
+
+Path du repertoire contenant les atlas.
+
+Path du repertoire contenant les images sujets.
+
+Pattern du nom des images sujets.
+
+Pattern du nom des Atlas.
+
+Path de sortie pour les données retournées.
+
+Path de sortie pour stockages des variables réutilisées dans les prochains scripts.
+
+Une fois le script1 excecuté, pour initialiser le script2, il faut donner:
+
+Path des variables (pour récupérer les données retournées par le script1).
+
+Path output du script1 qui contient les images de sujet "swapé".
+
+Path du repertoire contenant les Atlas binarisés.
+
+Path de sortie pour stocker les images après le traitement par recalage inverse.
+
+nom des fichiers contenant les diffèrentes variables.
+
+Le script3 nécessite :
+
+Path des variables et nom du fichiers des atlas recalés enregistrés dans le script2.
+
+Path de sortie pour enregistrer les masques d'hémisphères gauches.
+
+Enfin, le script4 attend qu"on lui donne : 
+
+Path des variables et nom des fichiers contenants la listes des paths des masques des hemisphères gauches, et de celui contenant la listes des sujets.
+
+Path du répertoire des images segmentés des sujets.
+
+Pattern du nom d'une image segmentées.
+
+Path de sortie des images après ce dernier traitement.
                         
