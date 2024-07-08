@@ -1,8 +1,6 @@
 import os
 import re
-import time
 import numpy as np
-import pandas as pd
 import nibabel as nib
 import ants
 
@@ -100,19 +98,19 @@ def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet
         Atlas_recherche = ants.image_read((os.path.join(path_atlas, tab2D[i, 0])))
         Sujet_Warped = Recalage_atlas(Atlas_recherche, sujet_ants, type_transfo, interpolation)
         for critere in criteres:
-            similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere, mask = None)
+            similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere, mask)
             tab2D[i, 1] = similarity
     print(tab2D)
     return tab2D
 
 def atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask = None):
-    tab_similarity = recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask = None)
+    tab_similarity = recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask)
     indice_val_max = np.argmax(np.abs(tab_similarity[:, 1].astype(float)))
     nom_max = tab_similarity[indice_val_max, 0]
     return nom_max
 
 def recup_bon_atlas_avc_transfos(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv, mask = None):
-    bon_atlas = atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation,mask = None)
+    bon_atlas = atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation,mask)
     sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)))
     atlas_ants = ants.image_read((os.path.join(path_atlas, bon_atlas)), reorient=True)
     path_trf_direct, path_trf_inv = SAVE_Transfo_rec_mat(atlas_ants, sujet_ants, type_transfo, file_transfo_direct, file_transfo_inv, sujet, bon_atlas)

@@ -281,3 +281,13 @@ if __name__ == "__main__":
 #     if case == 2 :
 #         tab_path_sujet, tab_path_sujet_segm = separe_fichier_img_reel_img_segm(all_sujets_path, nom_general_sujet_in_self_space)
 #         return tab_path_sujet, case
+
+#TRANSPOSER D'UNE MATRICE :
+  # transfo_test = ants.read_transform(list_tranf_direc[0]+"0GenericAffine.mat")
+    # trasnfo_test_mat = np.reshape(transfo_test.parameters, (4,3))
+    # transfo_test_inv = ants.read_transform(list_tranf_inv[0]+"0GenericAffine.mat")
+    # trasnfo_test_inv_mat = np.reshape(transfo_test_inv.parameters, (4,3))
+    # inv_trasnfo_test_mat = np.reshape(transfo_test.invert().parameters, (4,3))
+    # print(trasnfo_test_inv_mat-trasnfo_test_mat)
+    # print(trasnfo_test_inv_mat-inv_trasnfo_test_mat)
+    #print(trasnfo_test_inv_mat-np.linalg.inv(trasnfo_test_mat))
