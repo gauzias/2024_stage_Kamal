@@ -53,4 +53,26 @@ un swaping est réalisés sur les sujets segmentés avant d'aditionner chaques i
 
 ## tutoriel
 Pour appliquer le pipeline à une image, suivre la procédure suivante:
-- script1.py prend en entrée l'image anatomique d'un sujet dans l'espace du sujet et fait...
+- Il faut preparer pour le script1 les diffèrents chemins nécessaires pour la récupérations des données. 
+  On lui donne donc : -Path du repertoire contenant les atlas
+                      -Path du repertoire contenant les images sujets
+                      -Pattern du nom des images sujets
+                      -Pattern du nom des Atlas
+                      -Path de sortie pour les données retournées
+                      -Path de sortie pour stockages des variables réutilisées dans les prochains scripts
+  Une fois le script1 excecuté, pour initialiser le script2, il faut donner:
+                      -Path des variables (pour récupérer les données retournées par le script1)
+                      -Path output du script1 qui contient les images de sujet "swapé"
+                      -Path du repertoire contenant les Atlas binarisés
+                      -Path de sortie pour stocker les images après le traitement par recalage inverse.
+                      -nom des fichiers contenant les diffèrentes variables.
+  Le script3 nécessite :
+                      -Path des variables et nom du fichiers des atlas recalés enregistrés dans le script2
+                      -Path de sortie pour enregistrer les masques d'hémisphères gauches  
+  Enfin, le script4 attend qu"on lui donne : 
+                      -Path des variables et nom des fichiers contenants la listes des paths des masques des hemisphères gauches,
+                                                        et de celui contenant la listes des sujets.
+                      -Path du répertoire des images segmentés des sujets
+                      -Pattern du nom d'une image segmentées
+                      -Path de sortie des images après ce dernier traitement  
+                        
