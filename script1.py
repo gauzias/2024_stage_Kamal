@@ -67,6 +67,6 @@ if __name__ == "__main__":
 
     print(list_atlas_meilleur, tab_img_sujet, list_tranf_inv)
     np.save(os.path.join(path_variables, "list_atlas_meilleur.npy"), list_atlas_meilleur, allow_pickle='False')
-    np.save(os.path.join(path_variables, "tab_img_sujet.npy"), tab_img_sujet, allow_pickle='False')
+    np.save(os.path.join(path_variables, "tab_path_sujet.npy"), tab_path_sujet, allow_pickle='False')
     np.save(os.path.join(path_variables, "list_tranf_direc.npy"), list_tranf_direc, allow_pickle='False')
     np.save(os.path.join(path_variables, "list_tranf_inv.npy"), list_tranf_inv, allow_pickle='False')
