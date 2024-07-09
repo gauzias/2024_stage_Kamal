@@ -7,8 +7,7 @@ import os
 import time
 import numpy as np
 import tools as tls
-
-
+import matplotlib.pyplot as plt
 def etape1(nom_general_sujet, path_pattern, path_ouput, Nom_Atlas_anatomic_Pattern, path_des_atlas, file_transfo_direc, file_transfo_inv):
     """
     :param nom_general_sujet: Pattern du nom d'image d'un sujet anatomique données
@@ -29,15 +28,18 @@ def etape1(nom_general_sujet, path_pattern, path_ouput, Nom_Atlas_anatomic_Patte
     files_atlas = tls.Parcours_dossier_only_data_match(path_des_atlas, Nom_Atlas_anatomic_Pattern)
     tab_path_sujet = tls.recup_les_sujets(nom_general_sujet, pattern_sous_repertoire_by_sujet=path_pattern)
     print(tab_path_sujet)
-    list_path_sujet_rot = [tls.creation_PATH_pour_fichier_swaper(sujet_path, path_ouput) for sujet_path in tab_path_sujet]
-    for path_sujet_rot, path_sujet in zip(list_path_sujet_rot, tab_path_sujet):
-        tls.SWAP_COPY_INFO_SAVE(path_sujet, path_sujet_rot)
-    tab_repertoire_rot, tab_img_sujet_rot = tls.path_abs_sujet_to_fichier_repertorie_sujet(list_path_sujet_rot)
+    # list_path_sujet_rot = [tls.creation_PATH_pour_fichier_swaper(sujet_path, path_ouput) for sujet_path in tab_path_sujet]
+    # for path_sujet_rot, path_sujet in zip(list_path_sujet_rot, tab_path_sujet):
+    #     tls.SWAP_COPY_INFO_SAVE(path_sujet, path_sujet_rot)
+    tab_repertoire, tab_img_sujet = tls.path_abs_sujet_to_fichier_repertorie_sujet(tab_path_sujet)
+    print(tab_img_sujet)
+
     criteres = ['MattesMutualInformation']
     list_atlas_meilleur = list()
     list_tranf_direc = []
     list_tranf_inv = []
-    for sujet, repertoire in zip(tab_img_sujet_rot, tab_repertoire_rot):
+    for sujet, repertoire in zip(tab_img_sujet, tab_repertoire):
+        print(sujet)
         bon_atlas, path_trf_direct, path_trf_inv = tls.recup_bon_atlas_avc_transfos(files_atlas, criteres, path_des_atlas, sujet, repertoire, "Rigid", "linear", file_transfo_direc, file_transfo_inv)
         list_atlas_meilleur.append(bon_atlas)
         list_tranf_direc.append(path_trf_direct)
@@ -46,7 +48,7 @@ def etape1(nom_general_sujet, path_pattern, path_ouput, Nom_Atlas_anatomic_Patte
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
-    return list_atlas_meilleur, tab_img_sujet_rot, list_tranf_direc, list_tranf_inv
+    return list_atlas_meilleur, tab_img_sujet, list_tranf_direc, list_tranf_inv
 
 
 if __name__ == "__main__":
@@ -61,10 +63,10 @@ if __name__ == "__main__":
     path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
     path_output_avec_mask = "/envau/work/meca/users/2024_Kamal/output/Output_script1_avec_mask"
     chemin_vers_mask = np.load(os.path.join(path_variables,"chemin_vers_mask.npy"))
-    list_atlas_meilleur, tab_img_sujet_rot, list_tranf_direc, list_tranf_inv = etape1(nom_general_sujet, all_sujets_path, path_pattern, path_output, Nom_Atlas_anatomic_Pattern, path_des_atlas, file_transfo_direc, file_transfo_inv)
+    list_atlas_meilleur, tab_img_sujet, list_tranf_direc, list_tranf_inv = etape1(nom_general_sujet, path_pattern, path_output, Nom_Atlas_anatomic_Pattern, path_des_atlas, file_transfo_direc, file_transfo_inv)
 
-    print(list_atlas_meilleur, tab_img_sujet_rot, list_tranf_inv)
+    print(list_atlas_meilleur, tab_img_sujet, list_tranf_inv)
     np.save(os.path.join(path_variables, "list_atlas_meilleur.npy"), list_atlas_meilleur, allow_pickle='False')
-    np.save(os.path.join(path_variables, "tab_img_sujet_rot.npy"), tab_img_sujet_rot, allow_pickle='False')
+    np.save(os.path.join(path_variables, "tab_img_sujet.npy"), tab_img_sujet, allow_pickle='False')
     np.save(os.path.join(path_variables, "list_tranf_direc.npy"), list_tranf_direc, allow_pickle='False')
     np.save(os.path.join(path_variables, "list_tranf_inv.npy"), list_tranf_inv, allow_pickle='False')

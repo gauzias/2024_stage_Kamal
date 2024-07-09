@@ -11,7 +11,7 @@ import tools as tls
 
 def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_img_sujet_rot,list_tranf_inv,path_repertoire_sujet_rot,path_output_repertoire ):
     """
-    
+
     :param path_des_atlas_hemi_seg: Chemins des atlas segmenté par hemisphères RL
     :param list_atlas_meilleur: Listes des chemins pour chaque atlas mieux adaptés à un sujet données
     :param tab_img_sujet_rot: Listes des noms de chaques images de sujets anatomiques
@@ -21,15 +21,15 @@ def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_img_sujet_rot,list_t
     :return: AtlasLR_rec_dans_sub_space : Atlas segmenté LR recalé dans l'espace sujet associès
     """
     debut = time.time()
+
     #On cherche à recaler l'atlas sur l'image (une inversion du recalage), nous utilisons cette fois l'atlas binar
     #NOM des ATLAS Binairs
-
+    tls.creation_data_frame_sujet_by_best_atlas(tab_img_sujet_rot, list_atlas_meilleur)
     les_atlas_binary = []
-    for atlas in list_atlas_meilleur:
-        nom, fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
-        numero_atlas = nom.split('STA')[1]
-        print(numero_atlas)
-        les_atlas_binary.append(f'STA{numero_atlas}_all_reg_LR_dilM{fin}')
+    list_num = tls.extraction_numero_atlas(list_atlas_meilleur)
+    for num in list_num:
+        print(num)
+        les_atlas_binary.append(f'STA{num}_all_reg_LR_dilM.nii.gz')
 
     AtlasLR_rec_dans_sub_space= []  # liste des...
     for sujet, atlas_binar, warp in zip(tab_img_sujet_rot, les_atlas_binary, list_tranf_inv):
@@ -55,9 +55,9 @@ if __name__ == "__main__":
     path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
     path_output_repertoire = "/envau/work/meca/users/2024_Kamal/output/output_script2"
     list_atlas_meilleur = np.load(os.path.join(path_variables, "list_atlas_meilleur.npy"))
-    tab_img_sujet_rot = np.load(os.path.join(path_variables, "tab_img_sujet_rot.npy"))
+    tab_img_sujet = np.load(os.path.join(path_variables, "tab_img_sujet.npy"))
     list_tranf_direc =  np.load(os.path.join(path_variables, "list_tranf_direc.npy"))
     list_tranf_inv = np.load(os.path.join(path_variables, "list_tranf_inv.npy"))
 
-    AtlasLR_rec_dans_sub_space = etape2(path_des_atlas_hemi_seg, list_atlas_meilleur, tab_img_sujet_rot, list_tranf_inv, path_repertoire_sujet_rot, path_output_repertoire)
+    AtlasLR_rec_dans_sub_space = etape2(path_des_atlas_hemi_seg, list_atlas_meilleur, tab_img_sujet, list_tranf_inv, path_repertoire_sujet_rot, path_output_repertoire)
     np.save(os.path.join(path_variables, "AtlasLR_rec_dans_sub_space.npy"), AtlasLR_rec_dans_sub_space, allow_pickle='False')

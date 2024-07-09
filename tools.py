@@ -3,7 +3,8 @@ import re
 import numpy as np
 import nibabel as nib
 import ants
-
+import matplotlib.pyplot as plt
+import pandas as pd
 
 def recup_les_sujets(nom_general_sujet, repertoire_sujet_segm = None, pattern_sous_repertoire_by_sujet = None):
     file_paths = []
@@ -100,7 +101,7 @@ def recupAtlas_to_tableau_simil(lignes_atlas, criteres, path_atlas, sujet, sujet
         for critere in criteres:
             similarity = calcul_similarity_ants(Atlas_recherche, Sujet_Warped, critere, mask)
             tab2D[i, 1] = similarity
-    print(tab2D)
+    plot_sujet_by_atlas_simil(tab2D[:, 0], tab2D[:, 1], sujet)
     return tab2D
 
 def atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, mask = None):
@@ -127,3 +128,37 @@ def creation_chemin_fichier_mat(path_repertoire_output,img_name, atlas_name):
     nom_2, fin2 = (atlas_name[:-7], ".gz") if atlas_name.endswith(".nii.gz") else os.path.splitext(atlas_name)
     return os.path.join(path_repertoire_output, f"{nom_initial}_to_{nom_2}")
 
+def plot_sujet_by_atlas_simil(list1,list2,sujet):
+    numero_atlas_x = extraction_numero_atlas(list1)
+    similarite_abs = np.abs(list2.astype(float))
+    plt.figure(figsize = (10, 6))
+    plt.plot(numero_atlas_x, similarite_abs, marker = 'o')
+    plt.title(f" Valeurs de similarité pour chaque atlas pour le sujet {sujet[:-7]}", fontsize = 11, pad = 20)
+    plt.xlabel('l\'age de l\'atlas en semaine ', fontsize = 12)
+    plt.ylabel('valeur d\'information mutuelle', fontsize = 12)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+def extraction_numero_atlas(list_atlas):
+    list_num = []
+    for atlas in list_atlas:
+        nom, fin = (atlas[:-7], ".nii.gz") if atlas.endswith(".nii.gz") else os.path.splitext(atlas)
+        numero_atlas = nom.split('STA')[1]
+        list_num.append(numero_atlas)
+    return list_num
+
+def extraction_numero_sujet(list_sujet):
+    list_nums = []
+    for sujet in list_sujet :
+        num, fin = (sujet[:-49], "_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz") if sujet.endswith("_acq-haste_rec-nesvor_desc-aligned_T2w_rot.nii.gz") else os.path.splitext(sujet)
+        list_nums.append(num)
+    return list_nums
+def creation_data_frame_sujet_by_best_atlas(list_sujet, list_atlas):
+    age_atlas = extraction_numero_atlas(list_atlas)
+    nums_sujet = extraction_numero_sujet(list_sujet)
+    reel_age = ["28.4", "20.8","32.3", "29", "24.4"]
+    data = {'les numeros du sujet       ': nums_sujet, ' age (semaine) du meilleur atlas    ': age_atlas, 'age estime (pendant acquisition irm)': reel_age}
+    df = pd.DataFrame(data)
+    pd.set_option('display.colheader_justify', 'center') #On force le centrage des colonnes
+    print(df.to_string(index=False))
