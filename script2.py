@@ -9,7 +9,7 @@ import ants
 import tools as tls
 
 
-def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_path_sujet,list_tranf_inv,path_repertoire_sujet_rot,path_output_repertoire ):
+def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_path_sujet,list_tranf_inv,path_output_repertoire):
     """
 
     :param path_des_atlas_hemi_seg: Chemins des atlas segmenté par hemisphères RL
@@ -21,7 +21,6 @@ def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_path_sujet,list_tran
     :return: AtlasLR_rec_dans_sub_space : Atlas segmenté LR recalé dans l'espace sujet associès
     """
     debut = time.time()
-
     #On cherche à recaler l'atlas sur l'image (une inversion du recalage), nous utilisons cette fois l'atlas binar
     #NOM des ATLAS Binairs
     tab_repertoire, tab_img_sujet = tls.path_abs_sujet_to_fichier_repertorie_sujet(tab_path_sujet)
@@ -29,28 +28,27 @@ def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_path_sujet,list_tran
     les_atlas_binary = []
     list_num = tls.extraction_numero_atlas(list_atlas_meilleur)
     for num in list_num:
-        print(num)
         les_atlas_binary.append(f'STA{num}_all_reg_LR_dilM.nii.gz')
-
-    AtlasLR_rec_dans_sub_space= []  # liste des...
-    for sujet, atlas_binar, warp in zip(tab_img_sujet, les_atlas_binary, list_tranf_inv):
-        Sujet_fixe = ants.image_read(os.path.join(path_repertoire_sujet_rot, sujet))
+    AtlasRL_rec_dans_sub_space= []  # liste des...
+    for sujet, repertoire,  atlas_binar, warp in zip(tab_img_sujet,tab_repertoire, les_atlas_binary, list_tranf_inv):
+        Sujet_fixe =ants.image_read(os.path.join(repertoire, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_hemi_seg, atlas_binar))
-        print(f"les dimension de Sujet_fixe est : {np.shape(Sujet_fixe)}")
-        print(f"les dimension de Atlas_binary est : {np.shape(Atlas_binary )}")
-        transfo =warp + "_Inverse_0GenericAffine.mat"
-        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary, transformlist=transfo, interpolator="nearestNeighbor")
-        print(f"les dimension de Atlas_binary_warped est : {np.shape(Atlas_binary_warped)}")
+        transfo =warp + '_Inverse_0GenericAffine.mat'
+        print(transfo)
+        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=transfo, interpolator="nearestNeighbor")
+        print(type(Atlas_binary_warped))
         path_atlas_binary_warped = tls.creation_chemin_nom_img(path_output_repertoire, sujet, atlas_binar)
-        AtlasLR_rec_dans_sub_space.append(path_atlas_binary_warped)
-        nib.save(Atlas_binary_warped, path_atlas_binary_warped)
+        AtlasRL_rec_dans_sub_space.append(path_atlas_binary_warped)
+        ants.image_write(Atlas_binary_warped , path_atlas_binary_warped)
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
-    return AtlasLR_rec_dans_sub_space
+    return AtlasRL_rec_dans_sub_space
 
 
 if __name__ == "__main__":
+    nom_general_sujet = r'^sub-00\d+\_ses-00\d+\_acq-haste_rec-nesvor_desc-aligned_T2w.nii.gz'
+    path_pattern = r'/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/sub-00\d+\/ses-00\d+\/haste/default_reconst'
     path_des_atlas_hemi_seg = r'/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas'
     path_variables = "/envau/work/meca/users/2024_Kamal/2024_stage_Kamal/variables"
     path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
@@ -60,5 +58,5 @@ if __name__ == "__main__":
     list_tranf_direc =  np.load(os.path.join(path_variables, "list_tranf_direc.npy"))
     list_tranf_inv = np.load(os.path.join(path_variables, "list_tranf_inv.npy"))
 
-    AtlasLR_rec_dans_sub_space = etape2(path_des_atlas_hemi_seg, list_atlas_meilleur, tab_path_sujet, list_tranf_inv, path_repertoire_sujet_rot, path_output_repertoire)
-    np.save(os.path.join(path_variables, "AtlasLR_rec_dans_sub_space.npy"), AtlasLR_rec_dans_sub_space, allow_pickle='False')
+    AtlasRL_rec_dans_sub_space = etape2(path_des_atlas_hemi_seg, list_atlas_meilleur, tab_path_sujet, list_tranf_inv, path_output_repertoire)
+    np.save(os.path.join(path_variables, "AtlasRL_rec_dans_sub_space.npy"), AtlasRL_rec_dans_sub_space, allow_pickle='False')

@@ -48,7 +48,7 @@ def etape1(nom_general_sujet, path_pattern, path_ouput, Nom_Atlas_anatomic_Patte
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
-    return list_atlas_meilleur, tab_img_sujet, list_tranf_direc, list_tranf_inv
+    return list_atlas_meilleur, tab_path_sujet, list_tranf_direc, list_tranf_inv
 
 
 if __name__ == "__main__":
@@ -63,9 +63,9 @@ if __name__ == "__main__":
     path_des_atlas = "/envau/work/meca/users/2024_Kamal/Sym_Hemi_atlas/Fetal_atlas_gholipour/T2"
     path_output_avec_mask = "/envau/work/meca/users/2024_Kamal/output/Output_script1_avec_mask"
     chemin_vers_mask = np.load(os.path.join(path_variables,"chemin_vers_mask.npy"))
-    list_atlas_meilleur, tab_img_sujet, list_tranf_direc, list_tranf_inv = etape1(nom_general_sujet, path_pattern, path_output, Nom_Atlas_anatomic_Pattern, path_des_atlas, file_transfo_direc, file_transfo_inv)
+    list_atlas_meilleur, tab_path_sujet, list_tranf_direc, list_tranf_inv = etape1(nom_general_sujet, path_pattern, path_output, Nom_Atlas_anatomic_Pattern, path_des_atlas, file_transfo_direc, file_transfo_inv)
 
-    print(list_atlas_meilleur, tab_img_sujet, list_tranf_inv)
+    print(list_atlas_meilleur, list_tranf_inv)
     np.save(os.path.join(path_variables, "list_atlas_meilleur.npy"), list_atlas_meilleur, allow_pickle='False')
     np.save(os.path.join(path_variables, "tab_path_sujet.npy"), tab_path_sujet, allow_pickle='False')
     np.save(os.path.join(path_variables, "list_tranf_direc.npy"), list_tranf_direc, allow_pickle='False')
