@@ -23,6 +23,7 @@ def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_path_sujet,list_tran
     debut = time.time()
     #On cherche à recaler l'atlas sur l'image (une inversion du recalage), nous utilisons cette fois l'atlas binar
     #NOM des ATLAS Binairs
+    print(tab_path_sujet)
     tab_repertoire, tab_img_sujet = tls.path_abs_sujet_to_fichier_repertorie_sujet(tab_path_sujet)
     tls.creation_data_frame_sujet_by_best_atlas(tab_img_sujet, list_atlas_meilleur)
     les_atlas_binary = []
@@ -30,16 +31,20 @@ def etape2(path_des_atlas_hemi_seg, list_atlas_meilleur,tab_path_sujet,list_tran
     for num in list_num:
         les_atlas_binary.append(f'STA{num}_all_reg_LR_dilM.nii.gz')
     AtlasRL_rec_dans_sub_space= []  # liste des...
-    for sujet, repertoire,  atlas_binar, warp in zip(tab_img_sujet,tab_repertoire, les_atlas_binary, list_tranf_inv):
-        Sujet_fixe =ants.image_read(os.path.join(repertoire, sujet))
+    for sujet, repertoire,  atlas_binar, warp in zip(tab_img_sujet, tab_repertoire, les_atlas_binary, list_tranf_inv):
+        Sujet_fixe = ants.image_read(os.path.join(repertoire, sujet))
         Atlas_binary = ants.image_read(os.path.join(path_des_atlas_hemi_seg, atlas_binar))
-        transfo =warp + '_Inverse_0GenericAffine.mat'
+        transfo = warp + '_Inverse_0GenericAffine.mat'
         print(transfo)
-        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=transfo, interpolator="nearestNeighbor")
+        Atlas_binary_warped = ants.apply_transforms(Sujet_fixe, Atlas_binary,  transformlist=transfo, direction = 'fwd', interpolator="nearestNeighbor")
         print(type(Atlas_binary_warped))
+        # Atlas_binary_warped.set_spacing(Sujet_fixe.spacing)
+        # Atlas_binary_warped.set_origin(Sujet_fixe.origin)
+        # Atlas_binary_warped .set_direction(Atlas_binary.direction)
         path_atlas_binary_warped = tls.creation_chemin_nom_img(path_output_repertoire, sujet, atlas_binar)
         AtlasRL_rec_dans_sub_space.append(path_atlas_binary_warped)
-        ants.image_write(Atlas_binary_warped , path_atlas_binary_warped)
+        # nib.save(Atlas_binary_warped_nifti, path_atlas_binary_warped)
+        ants.image_write(Atlas_binary_warped, path_atlas_binary_warped)
     fin = time.time()
     tps_excecution = fin - debut
     print(f"le temps d'exécution du programme est : {tps_excecution} secondes")
@@ -54,7 +59,7 @@ if __name__ == "__main__":
     path_repertoire_sujet_rot = "/envau/work/meca/users/2024_Kamal/output/output_script1"
     path_output_repertoire = "/envau/work/meca/users/2024_Kamal/output/output_script2"
     list_atlas_meilleur = np.load(os.path.join(path_variables, "list_atlas_meilleur.npy"))
-    tab_path_sujet = np.load(os.path.join(path_variables, "tab_path_sujet.npy"))
+    tab_path_sujet = np.load(os.path.join(path_variables, "list_path_sujet_rot.npy"))
     list_tranf_direc =  np.load(os.path.join(path_variables, "list_tranf_direc.npy"))
     list_tranf_inv = np.load(os.path.join(path_variables, "list_tranf_inv.npy"))
 

@@ -26,13 +26,13 @@ def etape4(nom_general_sujet, all_sujets_path,path_output, tab_path_sujet, Atlas
     #Recuperation des images segmentés et on les swap :
     list_path_img_segmente = tls.recup_les_sujets(nom_general_sujet, repertoire_sujet_segm=all_sujets_path)
     print(list_path_img_segmente)
-    # list_path_img_segmente_rot = [tls.creation_PATH_pour_fichier_swaper(sujet_path, path_output) for sujet_path in list_path_img_segmente]
-    # for path_sujet_rot, path_sujet in zip(list_path_img_segmente_rot, list_path_img_segmente):
-    #     tls.SWAP_COPY_INFO_SAVE(path_sujet, path_sujet_rot)
+    list_path_img_segmente_rot = [tls.creation_PATH_pour_fichier_swaper(sujet_path, path_output) for sujet_path in list_path_img_segmente]
+    for path_sujet_rot, path_sujet in zip(list_path_img_segmente_rot, list_path_img_segmente):
+        tls.SWAP_COPY_INFO_SAVE(path_sujet, path_sujet_rot)
     print(AtlasRL_rec_dans_sub_space)
     
     # ON additionne apres passage en numpy array les tableau de l'image segmenté du sujet l'image de l'hemisphère droit*10
-    for path_sujet_segm, AtlasRL_rec_dans_sub_space, sujet in zip(list_path_img_segmente, AtlasRL_rec_dans_sub_space, tab_img_sujet):
+    for path_sujet_segm, AtlasRL_rec_dans_sub_space, sujet in zip(list_path_img_segmente_rot, AtlasRL_rec_dans_sub_space, tab_img_sujet):
         img_sujet_segmente = nib.load(path_sujet_segm)
         dtype_img_sujet_segm = img_sujet_segmente.get_data_dtype()
         img_sujet_segmente_array = img_sujet_segmente.get_fdata()
@@ -53,6 +53,6 @@ if __name__ == "__main__":
     all_sujets_path = r"/envau/work/meca/users/2024_Kamal/real_data/lastest_nesvor/"
     path_output = "/envau/work/meca/users/2024_Kamal/output/output_script4"
     AtlasRL_rec_dans_sub_space = np.load(os.path.join(path_variables, "AtlasRL_rec_dans_sub_space.npy"))
-    tab_path_sujet = np.load(os.path.join(path_variables, "tab_path_sujet.npy"))
+    tab_path_sujet = np.load(os.path.join(path_variables, "list_path_sujet_rot.npy"))
 
-    etape4(nom_general_sujet, all_sujets_path, path_output, tab_path_sujet,AtlasRL_rec_dans_sub_space )
+    etape4(nom_general_sujet, all_sujets_path, path_output, tab_path_sujet, AtlasRL_rec_dans_sub_space )

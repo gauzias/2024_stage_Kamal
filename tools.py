@@ -36,7 +36,7 @@ def SWAP_COPY_INFO_SAVE(path_img_input, path_img_rot_nifti):
     img_input = nib.load(path_img_input)
     img_input_array = img_input.get_fdata()
     original_data_type = img_input.get_data_dtype()
-    img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::-1, ::1, ::-1]
+    img_input_array_rot = np.transpose(img_input_array, (0, 1, 2))[::1, ::1, ::-1]
     img_input_array_rot = img_input_array_rot.astype(original_data_type)
     img_input_rot_nifti = nib.Nifti1Image(img_input_array_rot, img_input.affine, img_input.header)
     nib.save(img_input_rot_nifti, path_img_rot_nifti)
@@ -66,11 +66,7 @@ def Recalage_atlas(atlas_fix, img_mouv, type_transfo, interpolator):
 def SAVE_Transfo_rec_mat(atlas_fix, img_mouv, type_transfo, file_transfo_direct, file_transfo_inv, name_sujet, name_atlas):
     path_file_transfo_direct = creation_chemin_fichier_mat(file_transfo_direct, name_sujet, name_atlas)
     path_file_transfo_inv = creation_chemin_fichier_mat(file_transfo_inv, name_sujet, name_atlas)
-    if os.path.exists(path_file_transfo_direct):
-        print("ça existe déja")
     ants.registration(atlas_fix, img_mouv, type_of_transform=type_transfo, outprefix=path_file_transfo_direct + '_direct_')
-    if os.path.exists(path_file_transfo_inv):
-        print("ça existe déja")
     ants.registration(img_mouv, atlas_fix, type_of_transform=type_transfo, outprefix=path_file_transfo_inv + '_Inverse_')
     return path_file_transfo_direct, path_file_transfo_inv
 
@@ -113,7 +109,7 @@ def atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire
 def recup_bon_atlas_avc_transfos(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation, file_transfo_direct, file_transfo_inv, mask = None):
     bon_atlas = atlas_du_bon_age(lignes_atlas, criteres, path_atlas, sujet, sujet_repertoire, type_transfo, interpolation,mask)
     sujet_ants = ants.image_read((os.path.join(sujet_repertoire, sujet)))
-    atlas_ants = ants.image_read((os.path.join(path_atlas, bon_atlas)), reorient=True)
+    atlas_ants = ants.image_read((os.path.join(path_atlas, bon_atlas)))
     path_trf_direct, path_trf_inv = SAVE_Transfo_rec_mat(atlas_ants, sujet_ants, type_transfo, file_transfo_direct, file_transfo_inv, sujet, bon_atlas)
     return bon_atlas, path_trf_direct, path_trf_inv
 
