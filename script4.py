@@ -38,6 +38,8 @@ def etape4(nom_general_sujet, all_sujets_path,path_output, tab_path_sujet, Atlas
         img_sujet_segmente_array = img_sujet_segmente.get_fdata()
         AtlasLR_rec_dans_sub_space_array = nib.load(AtlasRL_rec_dans_sub_space).get_fdata()
         img_sujet_segm_binar_combined_array = img_sujet_segmente_array + 100 * AtlasLR_rec_dans_sub_space_array
+        img_sujet_segm_binar_combined_array[img_sujet_segm_binar_combined_array == 100] = 0
+        img_sujet_segm_binar_combined_array[img_sujet_segm_binar_combined_array == 200] = 0
         img_sujet_segm_binar_combined_array = img_sujet_segm_binar_combined_array.astype(dtype_img_sujet_segm)
         image_segm_final = nib.Nifti1Image(img_sujet_segm_binar_combined_array, img_sujet_segmente.affine, img_sujet_segmente.header)
         path_img_final = tls.creation_chemin_nom_img(path_output, sujet, "segmentation_LR.nii.gz")
